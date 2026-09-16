@@ -1,0 +1,62 @@
+{
+  "engine_id": "LYCOMING_IO360",
+  "engine_name": "Lycoming IO-360-M1A Flat-4",
+  "tuning_date": "2026-09-12T01:04:52Z",
+  "hardware": "NVIDIA GeForce RTX 5050 (CUDA Hist)",
+  "cv_folds": 3,
+  "samples_evaluated": 100000,
+  "fault_classifier": {
+    "best_accuracy": 0.9996900004999331,
+    "optimal_hyperparameters": {
+      "max_depth": 8,
+      "learning_rate": 0.08,
+      "n_estimators": 200,
+      "subsample": 0.85,
+      "colsample_bytree": 0.9
+    },
+    "feature_attributions": {
+      "rpm": 0.005733240861445665,
+      "manifold_pressure_hpa": 0.009552021510899067,
+      "power_output_kw": 0.003972001373767853,
+      "torque_nm": 0.010086319409310818,
+      "fuel_flow_lph": 0.012252777814865112,
+      "fuel_pressure_bar": 9.589979163138196e-05,
+      "cht_cyl_1": 0.018708406016230583,
+      "cht_cyl_2": 0.027794944122433662,
+      "cht_cyl_3": 0.026880674064159393,
+      "cht_cyl_4": 0.020190317183732986,
+      "egt_cyl_1": 0.009194896556437016,
+      "egt_cyl_2": 0.022510703653097153,
+      "egt_cyl_3": 0.051372747868299484,
+      "egt_cyl_4": 0.007430626545101404,
+      "oil_temperature_c": 0.006321579217910767,
+      "oil_pressure_bar": 0.16969545185565948,
+      "coolant_temperature_c": 0.054104626178741455,
+      "turbo_rpm": 0.0,
+      "vibration_g": 0.026375556364655495,
+      "bus_voltage_v": 7.927604747237638e-05,
+      "altitude_m": 8.017887739697471e-05,
+      "ambient_temp_c": 0.00011428750440245494,
+      "throttle_pct": 0.00034060233156196773,
+      "ignition_timing_btdc": 0.18488045036792755,
+      "injection_timing_btdc": 8.444514969596639e-05,
+      "injection_pulse_width_ms": 0.001954203238710761,
+      "lambda_afr": 0.08807520568370819,
+      "combustion_efficiency_pct": 0.03494355455040932,
+      "res_cht_spread": 0.06785131245851517,
+      "res_egt_spread": 0.02391878142952919,
+      "res_map_residual": 4.36330956290476e-05,
+      "res_oil_press_residual": 0.11536124348640442
+    }
+  },
+  "rul_regressor": {
+    "best_r2_score": 0.9932945809781231,
+    "best_rmse_hours": 36.8068532409934,
+    "optimal_hyperparameters": {
+      "max_depth": 8,
+      "learning_rate": 0.04,
+      "n_estimators": 300,
+      "subsample": 0.9
+    }
+  }
+}

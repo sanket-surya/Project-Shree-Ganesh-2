@@ -1,0 +1,68 @@
+{
+  "engine_id": "AUSTRO_AE300",
+  "engine_name": "Austro Engine AE300 Heavy Fuel",
+  "model_version": "3.0.0-per-engine-gpu",
+  "timestamp": "2026-09-12T00:52:24Z",
+  "training_records": 999999,
+  "test_records": 200000,
+  "hardware": "NVIDIA GeForce RTX 5050 (CUDA Hist)",
+  "fault_classifier": {
+    "accuracy": 0.99999,
+    "top_features": {
+      "res_oil_press_residual": 0.21779775619506836,
+      "injection_pulse_width_ms": 0.1554587483406067,
+      "coolant_temperature_c": 0.11856136471033096,
+      "oil_pressure_bar": 0.10228252410888672,
+      "res_map_residual": 0.09939774870872498
+    }
+  },
+  "rul_regressor": {
+    "rmse_hours": 13.104176414517866,
+    "r2_score": 0.9989433418546366
+  },
+  "fault_classes": [
+    "Nominal",
+    "Cylinder_Misfire",
+    "Turbo_Degradation",
+    "Injector_Clogging",
+    "Coolant_Loss",
+    "Oil_Starvation",
+    "Sensor_Drift",
+    "Combustion_Knock",
+    "Valve_Leakage"
+  ],
+  "feature_columns": [
+    "rpm",
+    "manifold_pressure_hpa",
+    "power_output_kw",
+    "torque_nm",
+    "fuel_flow_lph",
+    "fuel_pressure_bar",
+    "cht_cyl_1",
+    "cht_cyl_2",
+    "cht_cyl_3",
+    "cht_cyl_4",
+    "egt_cyl_1",
+    "egt_cyl_2",
+    "egt_cyl_3",
+    "egt_cyl_4",
+    "oil_temperature_c",
+    "oil_pressure_bar",
+    "coolant_temperature_c",
+    "turbo_rpm",
+    "vibration_g",
+    "bus_voltage_v",
+    "altitude_m",
+    "ambient_temp_c",
+    "throttle_pct",
+    "ignition_timing_btdc",
+    "injection_timing_btdc",
+    "injection_pulse_width_ms",
+    "lambda_afr",
+    "combustion_efficiency_pct",
+    "res_cht_spread",
+    "res_egt_spread",
+    "res_map_residual",
+    "res_oil_press_residual"
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "engine_id": "ROTAX_914F",
+  "engine_name": "Rotax 914F3 Turbo Boxer",
+  "model_version": "3.0.0-per-engine-gpu",
+  "timestamp": "2026-09-12T00:52:00Z",
+  "training_records": 999999,
+  "test_records": 200000,
+  "hardware": "NVIDIA GeForce RTX 5050 (CUDA Hist)",
+  "fault_classifier": {
+    "accuracy": 0.99996,
+    "top_features": {
+      "oil_pressure_bar": 0.19446764886379242,
+      "ignition_timing_btdc": 0.1578608900308609,
+      "res_oil_press_residual": 0.13514108955860138,
+      "lambda_afr": 0.10006209462881088,
+      "res_map_residual": 0.09154703468084335
+    }
+  },
+  "rul_regressor": {
+    "rmse_hours": 18.132768278816812,
+    "r2_score": 0.9983764982116443
+  },
+  "fault_classes": [
+    "Nominal",
+    "Cylinder_Misfire",
+    "Turbo_Degradation",
+    "Injector_Clogging",
+    "Coolant_Loss",
+    "Oil_Starvation",
+    "Sensor_Drift",
+    "Combustion_Knock",
+    "Valve_Leakage"
+  ],
+  "feature_columns": [
+    "rpm",
+    "manifold_pressure_hpa",
+    "power_output_kw",
+    "torque_nm",
+    "fuel_flow_lph",
+    "fuel_pressure_bar",
+    "cht_cyl_1",
+    "cht_cyl_2",
+    "cht_cyl_3",
+    "cht_cyl_4",
+    "egt_cyl_1",
+    "egt_cyl_2",
+    "egt_cyl_3",
+    "egt_cyl_4",
+    "oil_temperature_c",
+    "oil_pressure_bar",
+    "coolant_temperature_c",
+    "turbo_rpm",
+    "vibration_g",
+    "bus_voltage_v",
+    "altitude_m",
+    "ambient_temp_c",
+    "throttle_pct",
+    "ignition_timing_btdc",
+    "injection_timing_btdc",
+    "injection_pulse_width_ms",
+    "lambda_afr",
+    "combustion_efficiency_pct",
+    "res_cht_spread",
+    "res_egt_spread",
+    "res_map_residual",
+    "res_oil_press_residual"
+  ]
+}

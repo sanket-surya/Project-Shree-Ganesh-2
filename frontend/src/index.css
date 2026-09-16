@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  /* ── DRDO / Defense Avionics GCS Standard Palette (Calm, Minimal, Zero Disco) ── */
+  --bg-primary: #0a0d14;
+  --bg-secondary: #0f131d;
+  --bg-card: #131722;
+  --bg-card-hover: #171c2a;
+  --bg-card-inner: #0d1018;
+  
+  --border-card: #1e2434;
+  --border-subtle: #181d2a;
+  --border-hover: #2a334a;
+  --border-divider: #161a26;
+
+  /* Tactical Strict Functional Colors */
+  --accent-blue: #2563eb;
+  --accent-sky: #38bdf8;
+  --state-nominal: #10b981;
+  --state-caution: #f59e0b;
+  --state-critical: #ef4444;
+
+  /* Typography */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius-card: 4px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   DRDO DEFENSE CANVASES (Zero Grid Lines, Zero Glowing Halo Effects)
+   ══════════════════════════════════════════════════════════════════════ */
+.tactical-grid-bg {
+  background-color: var(--bg-primary);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   GCS CARD — Clean, Solid, Aerospace Instrument Standard
+   ══════════════════════════════════════════════════════════════════════ */
+.gcs-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-card);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.15s ease;
+}
+
+.gcs-card:hover {
+  border-color: var(--border-hover);
+}
+
+.gcs-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-divider);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #cbd5e1;
+  font-family: var(--font-main);
+}
+
+/* Clean Crisp Text — STRICTLY ZERO NEON TEXT SHADOWS */
+.glow-cyan, .glow-green, .glow-red, .glow-amber {
+  text-shadow: none !important;
+}
+.glow-cyan { color: #38bdf8; }
+.glow-green { color: #10b981; }
+.glow-red { color: #ef4444; }
+.glow-amber { color: #f59e0b; }
+
+/* Tactical Military Action Buttons */
+.tactical-btn {
+  background: #151924;
+  border: 1px solid #22283a;
+  color: #cbd5e1;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 3px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.tactical-btn:hover {
+  background: #1d2334;
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.tactical-btn.active {
+  background: #1d4ed8;
+  color: #ffffff;
+  border-color: #3b82f6;
+  font-weight: 600;
+}
+
+.tactical-btn.danger {
+  border-color: #7f1d1d;
+  color: #fca5a5;
+}
+.tactical-btn.danger:hover {
+  background: #7f1d1d;
+  color: #fff;
+}
+.tactical-btn.danger.active {
+  background: #b91c1c;
+  color: #fff;
+  border-color: #ef4444;
+}
+
+/* Minimal Engineering Scrollbars */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0d14;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e2434;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2e374e;
+}

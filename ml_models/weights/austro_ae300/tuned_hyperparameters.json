@@ -1,0 +1,62 @@
+{
+  "engine_id": "AUSTRO_AE300",
+  "engine_name": "Austro Engine AE300 Heavy Fuel",
+  "tuning_date": "2026-09-12T01:03:39Z",
+  "hardware": "NVIDIA GeForce RTX 5050 (CUDA Hist)",
+  "cv_folds": 3,
+  "samples_evaluated": 100000,
+  "fault_classifier": {
+    "best_accuracy": 0.9998799996999791,
+    "optimal_hyperparameters": {
+      "max_depth": 10,
+      "learning_rate": 0.04,
+      "n_estimators": 220,
+      "subsample": 0.9,
+      "colsample_bytree": 0.8
+    },
+    "feature_attributions": {
+      "rpm": 0.0046794903464615345,
+      "manifold_pressure_hpa": 0.003318819450214505,
+      "power_output_kw": 0.006088727153837681,
+      "torque_nm": 0.0012528405059129,
+      "fuel_flow_lph": 0.0012692870805040002,
+      "fuel_pressure_bar": 7.386071229120716e-05,
+      "cht_cyl_1": 0.013609221205115318,
+      "cht_cyl_2": 0.015620457008481026,
+      "cht_cyl_3": 0.04751317948102951,
+      "cht_cyl_4": 0.01889522559940815,
+      "egt_cyl_1": 0.002729520434513688,
+      "egt_cyl_2": 0.03405166044831276,
+      "egt_cyl_3": 0.08738956600427628,
+      "egt_cyl_4": 0.0071367244236171246,
+      "oil_temperature_c": 0.0035481967497617006,
+      "oil_pressure_bar": 0.1128796860575676,
+      "coolant_temperature_c": 0.10355027765035629,
+      "turbo_rpm": 0.010333367623388767,
+      "vibration_g": 0.038552578538656235,
+      "bus_voltage_v": 7.59485483285971e-05,
+      "altitude_m": 0.001022642944008112,
+      "ambient_temp_c": 0.0008593201637268066,
+      "throttle_pct": 0.002945280633866787,
+      "ignition_timing_btdc": 0.0,
+      "injection_timing_btdc": 0.0014254051493480802,
+      "injection_pulse_width_ms": 0.10126110166311264,
+      "lambda_afr": 0.012894590385258198,
+      "combustion_efficiency_pct": 0.03319570794701576,
+      "res_cht_spread": 0.04739683121442795,
+      "res_egt_spread": 0.03501962125301361,
+      "res_map_residual": 0.09974338114261627,
+      "res_oil_press_residual": 0.15166744589805603
+    }
+  },
+  "rul_regressor": {
+    "best_r2_score": 0.9971116580854208,
+    "best_rmse_hours": 21.511699872782312,
+    "optimal_hyperparameters": {
+      "max_depth": 6,
+      "learning_rate": 0.06,
+      "n_estimators": 220,
+      "subsample": 0.85
+    }
+  }
+}

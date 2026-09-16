@@ -1,0 +1,33 @@
+# Large datasets & raw data (generated via scripts)
+ml_models/data/
+*.csv
+*.dat
+*.parquet
+
+# Large documents / thesis PDFs
+*.pdf
+engine_docs/
+
+# Deep learning raw checkpoints
+*.h5
+*.pt
+*.pth
+*.onnx
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.env
+venv/
+.venv/
+env/
+
+# Node / Frontend build artifacts
+node_modules/
+frontend/node_modules/
+frontend/dist/
+dist/
+build/
+.vscode/
