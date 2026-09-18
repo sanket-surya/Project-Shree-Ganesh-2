@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plane, Layers, Activity, Wrench, Rocket } from 'lucide-react';
+import { Plane, Layers, Activity, Wrench, Rocket, ShieldCheck, Film } from 'lucide-react';
 import ThreeEngineTwin from './components/ThreeEngineTwin';
 import TelemetryGauges from './components/TelemetryGauges';
 import CylinderThermalMatrix from './components/CylinderThermalMatrix';
@@ -12,6 +12,9 @@ import CanBusTerminal from './components/CanBusTerminal';
 import MissionReplayBar from './components/MissionReplayBar';
 import ReportModal from './components/ReportModal';
 import DegradationTrendChart from './components/DegradationTrendChart';
+import PreFlightMRI from './components/PreFlightMRI';
+import MissionReplayPanel from './components/MissionReplayPanel';
+import AirworthinessReport from './components/AirworthinessReport';
 
 import MaintenanceScheduler from './components/MaintenanceScheduler';
 import CascadeTimelinePanel from './components/CascadeTimelinePanel';
@@ -19,6 +22,8 @@ import CascadeTimelinePanel from './components/CascadeTimelinePanel';
 const TABS = [
   { id: 'twin',        label: 'DIGITAL TWIN',        icon: <Layers size={14} /> },
   { id: 'trends',      label: 'DEGRADATION TRENDS',   icon: <Activity size={14} /> },
+  { id: 'preflight',   label: 'PRE-FLIGHT GO/NO-GO',  icon: <ShieldCheck size={14} /> },
+  { id: 'replay',      label: 'MISSION REPLAY',       icon: <Film size={14} /> },
   { id: 'maintenance', label: 'MAINTENANCE',           icon: <Wrench size={14} /> },
   { id: 'cascade',     label: 'CASCADE FAILURE DEMO', icon: <Rocket size={14} className="text-orange-400" /> },
 ];
@@ -277,6 +282,38 @@ export default function App() {
               <AIPredictivePanel telemetry={currentTelem} />
               <RULDegradationGauge telemetry={currentTelem} />
               <VibrationWaterfall telemetry={currentTelem} />
+            </div>
+          </div>
+        )}
+
+        {/* ─ TAB: PRE-FLIGHT GO/NO-GO ──────────────────────────────────────── */}
+        {activeTab === 'preflight' && (
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-3">
+            <div className="xl:col-span-7 flex flex-col gap-3">
+              <PreFlightMRI />
+              <AirworthinessReport telemetry={currentTelem} />
+            </div>
+            <div className="xl:col-span-5 flex flex-col gap-3">
+              <div className="h-[380px] min-h-[340px]">
+                <ThreeEngineTwin telemetry={currentTelem} onSelectComponent={setSelectedComponent} />
+              </div>
+              <TelemetryGauges telemetry={currentTelem} />
+              <RULDegradationGauge telemetry={currentTelem} />
+            </div>
+          </div>
+        )}
+
+        {/* ─ TAB: MISSION REPLAY ───────────────────────────────────────────── */}
+        {activeTab === 'replay' && (
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-3">
+            <div className="xl:col-span-8 flex flex-col gap-3">
+              <MissionReplayPanel />
+              <DegradationTrendChart telemetry={currentTelem} historyBuffer={historyBuffer} />
+            </div>
+            <div className="xl:col-span-4 flex flex-col gap-3">
+              <AIPredictivePanel telemetry={currentTelem} />
+              <ContingencyAdvisory telemetry={currentTelem} />
+              <CanBusTerminal telemetry={currentTelem} />
             </div>
           </div>
         )}

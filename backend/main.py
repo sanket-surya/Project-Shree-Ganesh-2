@@ -21,7 +21,7 @@ from pydantic import BaseModel
 # Add project root to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from backend.physics_twin import AeroPistonTwinPhysics, ENGINE_PROFILES
+from backend.physics_twin import AeroPistonTwinPhysics, ENGINE_PROFILES, ISAAtmosphereModel, MissionReliabilityIndex
 from ml_models.inference_engine import AeroEngineInferenceEngine
 
 app = FastAPI(
@@ -730,6 +730,287 @@ async def websocket_telemetry_stream(websocket: WebSocket):
         if websocket in active_connections:
             active_connections.remove(websocket)
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NEW APIs: Mission Reliability, Mission Replay, Airworthiness Report, ISA
+# Directly satisfies SIH26054 PS: "Mission Reliability Enhancement" +
+# "Mission Replay & Planning" + "varying environmental conditions" +
+# "lifecycle management"
+# ─────────────────────────────────────────────────────────────────────────────
+
+class MissionReliabilityRequest(BaseModel):
+    mission_duration_hrs: float = 8.0
+    mission_altitude_m: float = 4572.0   # 15,000 ft default
+    mission_type: str = "ISR_PATROL"     # ISR_PATROL | BORDER_WATCH | RECON | RELAY
+
+@app.post("/api/mission-reliability")
+async def get_mission_reliability(req: MissionReliabilityRequest):
+    """
+    Pre-flight Mission Reliability Index (MRI).
+    Returns Go/No-Go decision with Weibull failure probability and AHP health sub-indices.
+    Supports altitude-corrected power and BSFC predictions.
+    """
+    state = physics_engine.get_state_dict()
+    ai_diag = ai_engine.infer(state) if ai_engine.is_loaded else {}
+
+    # Health Index from AI (0-1 scale)
+    health_index = state.get("health_score", 85.0) / 100.0
+    rul_hours    = ai_diag.get("rul_hours", 875.0)
+    hours_acc    = state.get("accumulated_hours", 124.5)
+    oil_press    = state.get("oil_pressure_bar", 3.8)
+    prof         = ENGINE_PROFILES.get(physics_engine.active_engine_id, {})
+    oil_nominal  = prof.get("nominal_oil_bar", 3.8)
+
+    # ISA conditions at mission altitude
+    isa = ISAAtmosphereModel.conditions(req.mission_altitude_m)
+    power_frac = ISAAtmosphereModel.power_fraction(
+        req.mission_altitude_m,
+        turbocharged=(physics_engine.active_engine_id != "LYCOMING_IO360")
+    )
+    bsfc_sl     = 0.45  # lb/hr/hp nominal for Rotax 914F at 75% power
+    bsfc_alt    = ISAAtmosphereModel.bsfc_altitude_correction(bsfc_sl, req.mission_altitude_m)
+
+    # Compute MRI
+    mri_result = MissionReliabilityIndex.compute(
+        health_index       = health_index,
+        rul_hours          = rul_hours,
+        mission_duration_hrs = req.mission_duration_hrs,
+        hours_accumulated  = hours_acc,
+        oil_press_bar      = oil_press,
+        oil_press_nominal  = oil_nominal
+    )
+
+    # Build full response
+    return {
+        "engine_id":         physics_engine.active_engine_id,
+        "engine_name":       physics_engine.engine_name,
+        "mission_type":      req.mission_type,
+        "mission_duration_hrs": req.mission_duration_hrs,
+        "mission_altitude_m":   req.mission_altitude_m,
+        "mission_altitude_ft":  round(req.mission_altitude_m * 3.28084, 0),
+        "mri": mri_result,
+        "isa_conditions": {
+            "temperature_c":   round(isa["temperature_c"], 1),
+            "pressure_hpa":    round(isa["pressure_hpa"], 1),
+            "density_ratio":   round(isa["density_ratio"], 4),
+            "power_fraction":  round(power_frac * 100, 1),
+            "power_available_hp": round(physics_engine.engine_power_hp * power_frac, 1),
+            "bsfc_sl_lbhrhp":  round(bsfc_sl, 3),
+            "bsfc_alt_lbhrhp": round(bsfc_alt, 3),
+            "bsfc_penalty_pct": round((bsfc_alt - bsfc_sl) / bsfc_sl * 100, 1),
+        },
+        "engine_health": {
+            "health_score_pct":  round(health_index * 100, 1),
+            "rul_hours":         round(rul_hours, 1),
+            "hours_accumulated": round(hours_acc, 1),
+            "tbo_hours":         prof.get("tbo_hours", 2000.0),
+            "tbo_remaining":     round(prof.get("tbo_hours", 2000.0) - hours_acc, 1),
+            "active_faults":     list(physics_engine.active_faults.keys()),
+        },
+        "recommendation": _build_recommendation(mri_result["decision"], mri_result, rul_hours),
+    }
+
+def _build_recommendation(decision: str, mri: dict, rul_hours: float) -> str:
+    if decision == "GO":
+        return (f"ENGINE CLEARED FOR MISSION. MRI {mri['mri_pct']}% — "
+                f"Failure probability {mri['p_fail_mission']:.2f}%. "
+                f"RUL {rul_hours:.0f} hrs available.")
+    elif decision == "CAUTION":
+        return (f"PROCEED WITH CAUTION. MRI {mri['mri_pct']}% — "
+                f"Monitor CHT/EGT closely. Consider shorter mission profile. "
+                f"Alert maintenance crew on landing.")
+    else:
+        return (f"MISSION ABORT RECOMMENDED. MRI {mri['mri_pct']}% below safe threshold. "
+                f"Failure probability {mri['p_fail_mission']:.2f}%. "
+                f"Schedule immediate inspection before next sortie.")
+
+
+@app.get("/api/mission-replay")
+async def get_mission_replay(downsample: int = 1):
+    """
+    Mission Replay API — returns the black-box flight history buffer.
+    Provides complete telemetry timeline for post-flight analysis.
+    Downsample parameter reduces data volume for slow connections.
+    """
+    if not flight_black_box:
+        return {"status": "no_data", "count": 0, "replay": []}
+
+    replay_data = flight_black_box[::max(1, downsample)]
+
+    # Build compact replay frames for timeline
+    frames = []
+    t0 = replay_data[0]["timestamp"] if replay_data else 0
+    for pkt in replay_data:
+        s = pkt.get("state", {})
+        ai = pkt.get("ai", {})
+        frames.append({
+            "t":            round(pkt["timestamp"] - t0, 2),
+            "rpm":          round(s.get("rpm", 0), 0),
+            "map_hpa":      round(s.get("manifold_pressure_hpa", 0), 1),
+            "cht_max":      round(max(s.get("cht_c", [0])), 1),
+            "egt_max":      round(max(s.get("egt_c", [0])), 1),
+            "cht_spread":   round(max(s.get("cht_c", [0])) - min(s.get("cht_c", [0])), 1),
+            "egt_spread":   round(max(s.get("egt_c", [0])) - min(s.get("egt_c", [0])), 1),
+            "oil_press":    round(s.get("oil_pressure_bar", 0), 2),
+            "coolant":      round(s.get("coolant_temp_c", 0), 1),
+            "health_pct":   round(s.get("health_score", 100), 1),
+            "anomaly":      round(ai.get("anomaly_score", 0), 4),
+            "fault":        ai.get("fault_type", "NONE"),
+            "rul":          round(ai.get("rul_hours", 0), 0),
+            "altitude_m":   round(s.get("altitude_m", 0), 0),
+            "throttle":     round(s.get("throttle_pct", 0), 1),
+            "vibration":    round(s.get("vibration_g", 0), 3),
+        })
+
+    return {
+        "status":        "ok",
+        "count":         len(frames),
+        "duration_s":    round(frames[-1]["t"] if frames else 0, 2),
+        "engine_id":     physics_engine.active_engine_id,
+        "engine_name":   physics_engine.engine_name,
+        "replay":        frames,
+        "summary": {
+            "max_cht":       max((f["cht_max"] for f in frames), default=0),
+            "max_egt":       max((f["egt_max"] for f in frames), default=0),
+            "max_egt_spread":max((f["egt_spread"] for f in frames), default=0),
+            "min_oil_press": min((f["oil_press"] for f in frames), default=0),
+            "min_health":    min((f["health_pct"] for f in frames), default=0),
+            "max_anomaly":   max((f["anomaly"] for f in frames), default=0),
+            "faults_seen":   list(set(f["fault"] for f in frames if f["fault"] != "NONE")),
+        }
+    }
+
+
+@app.get("/api/airworthiness-report")
+async def get_airworthiness_report():
+    """
+    Virtual Airworthiness Report — AeroTwin's per-component health assessment.
+    Provides TBO status, condition-based RUL extension, and component-level health grades.
+    Inspired by commercial EHM systems (Honeywell Ensemble, GE Collaborative Insight).
+    """
+    state  = physics_engine.get_state_dict()
+    ai_diag = ai_engine.infer(state) if ai_engine.is_loaded else {}
+    prof   = ENGINE_PROFILES.get(physics_engine.active_engine_id, {})
+
+    hours_acc = state.get("accumulated_hours", 124.5)
+    tbo       = prof.get("tbo_hours", 2000.0)
+    rul_hours = ai_diag.get("rul_hours", 875.0)
+    health    = state.get("health_score", 85.0)
+    cht_vals  = state.get("cht_c", [112.0, 112.0, 112.0, 112.0])
+    egt_vals  = state.get("egt_c", [810.0, 810.0, 810.0, 810.0])
+    oil_press = state.get("oil_pressure_bar", 3.8)
+    vibration = state.get("vibration_g", 1.45)
+    map_res   = state.get("res_map_residual", 0.0)
+
+    # Per-cylinder health (based on EGT spread from mean)
+    egt_mean = sum(egt_vals) / len(egt_vals)
+    cyl_health = []
+    for i, (cht, egt) in enumerate(zip(cht_vals, egt_vals)):
+        cht_margin = max(0, 1.0 - (cht / prof.get("nominal_cht_c", 112.0) - 1.0) * 5.0)
+        egt_dev    = abs(egt - egt_mean) / max(1.0, egt_mean)
+        egt_margin = max(0, 1.0 - egt_dev * 10.0)
+        cyl_hi     = round(min(1.0, (cht_margin * 0.5 + egt_margin * 0.5)) * 100, 1)
+        cyl_health.append({
+            "cylinder": i + 1,
+            "cht_c": round(cht, 1),
+            "egt_c": round(egt, 1),
+            "health_pct": cyl_hi,
+            "status": "HEALTHY" if cyl_hi > 80 else ("CAUTION" if cyl_hi > 60 else "FAULT"),
+        })
+
+    # Turbocharger health (MAP residual based)
+    turbo_hi = max(0, min(100, 100 - abs(map_res) * 5.0))
+
+    # Oil system health
+    oil_margin = min(1.0, oil_press / max(0.1, prof.get("nominal_oil_bar", 3.8)))
+    oil_hi = round(oil_margin * 100, 1)
+
+    # Mechanical health (vibration based)
+    vib_nominal = 1.45
+    mech_hi = max(0, min(100, 100 - (vibration - vib_nominal) / vib_nominal * 100))
+
+    # TBO extension estimate (condition-based vs time-based)
+    time_based_remaining = tbo - hours_acc
+    condition_based_rul  = rul_hours
+    extension_hours      = max(0, condition_based_rul - time_based_remaining)
+
+    # Overall airworthiness
+    is_airworthy = (health > 70 and oil_press > 1.5 and
+                    not physics_engine.engine_seized and
+                    all(c["status"] != "FAULT" for c in cyl_health))
+    status = ("AIRWORTHY" if is_airworthy else
+              ("AIRWORTHY (Conditional)" if health > 55 else "NOT AIRWORTHY"))
+
+    return {
+        "engine_id":         physics_engine.active_engine_id,
+        "engine_name":       physics_engine.engine_name,
+        "airworthiness_status": status,
+        "is_airworthy":      is_airworthy,
+        "report_timestamp":  datetime.utcnow().isoformat() + "Z",
+        "hours_accumulated": round(hours_acc, 1),
+        "tbo_hours":         tbo,
+        "tbo_remaining_hrs": round(time_based_remaining, 1),
+        "condition_based_rul_hrs": round(condition_based_rul, 1),
+        "tbo_extension_hrs": round(extension_hours, 1),
+        "overall_health_pct": round(health, 1),
+        "active_faults":     list(physics_engine.active_faults.keys()),
+        "cylinders":         cyl_health,
+        "components": {
+            "turbocharger": {
+                "health_pct": round(turbo_hi, 1),
+                "map_residual_inhg": round(map_res, 2),
+                "status": "HEALTHY" if turbo_hi > 80 else ("CAUTION" if turbo_hi > 60 else "INSPECT"),
+            },
+            "oil_system": {
+                "health_pct": oil_hi,
+                "oil_press_bar": round(oil_press, 2),
+                "status": "HEALTHY" if oil_hi > 80 else ("LOW" if oil_hi > 50 else "CRITICAL"),
+            },
+            "mechanical": {
+                "health_pct": round(mech_hi, 1),
+                "vibration_g": round(vibration, 3),
+                "status": "HEALTHY" if mech_hi > 80 else ("CAUTION" if mech_hi > 60 else "INSPECT"),
+            },
+        },
+        "next_inspection_hrs": round(min(time_based_remaining, condition_based_rul * 0.5), 1),
+        "certification_ref": prof.get("certification", "N/A"),
+    }
+
+
+@app.get("/api/isa-conditions")
+async def get_isa_conditions(altitude_m: float = 1500.0):
+    """
+    ISA Standard Atmosphere conditions at specified altitude.
+    Used for mission planning and altitude-corrected engine performance.
+    Per ICAO Doc 7488/3 troposphere model.
+    """
+    isa = ISAAtmosphereModel.conditions(altitude_m)
+    power_frac = ISAAtmosphereModel.power_fraction(
+        altitude_m,
+        turbocharged=(physics_engine.active_engine_id != "LYCOMING_IO360")
+    )
+    bsfc_sl  = 0.45
+    bsfc_alt = ISAAtmosphereModel.bsfc_altitude_correction(bsfc_sl, altitude_m)
+    return {
+        "altitude_m":        round(altitude_m, 1),
+        "altitude_ft":       round(altitude_m * 3.28084, 0),
+        "temperature_k":     round(isa["temperature_k"], 2),
+        "temperature_c":     round(isa["temperature_c"], 1),
+        "pressure_pa":       round(isa["pressure_pa"], 1),
+        "pressure_hpa":      round(isa["pressure_hpa"], 2),
+        "density_kgm3":      round(isa["density_kgm3"], 5),
+        "density_ratio":     round(isa["density_ratio"], 5),
+        "power_fraction_pct": round(power_frac * 100, 2),
+        "power_available_hp": round(physics_engine.engine_power_hp * power_frac, 1),
+        "bsfc_sl_lbhrhp":    round(bsfc_sl, 3),
+        "bsfc_alt_lbhrhp":   round(bsfc_alt, 3),
+        "engine_id":         physics_engine.active_engine_id,
+        "turbocharged":      physics_engine.active_engine_id != "LYCOMING_IO360",
+        "model": "ISA (ICAO Doc 7488/3 Troposphere)",
+    }
+
+
 if __name__ == "__main__":
+
     import uvicorn
     uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)

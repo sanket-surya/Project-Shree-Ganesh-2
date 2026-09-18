@@ -1,0 +1,27 @@
+﻿=== bearing fault diagnosis vibration ===
+  ID:31746343 | Synchronized Vibration Data Collection for Fault Diagnosis of Ind | 53.4MB
+    -> LOAD_5KG.zip (25.7MB)
+    -> NO LOAD.zip (24.7MB)
+=== engine health monitoring sensor ===
+  ID:33399838 | <b>Towards a Wearable Polysomnography Approach: A Dataset of Key  | 342.5MB
+    -> G-ID001.dat (47.4MB)
+  ID:33386800 | Rapid Detection
+of Dextromethorphan in Saliva and
+EΓÇæJuice Based o | 15.5MB
+    -> ac6c03419_si_001.xlsx (15.5MB)
+=== UAV drone fault detection IMU ===
+=== turbofan degradation RUL ===
+=== gearbox vibration fault ===
+  ID:32025606 | SNU Planetary Gearbox Dataset | 16978.5MB
+    -> SNU_Figshare_code.zip (1201.6MB)
+    -> SNU Planetary Gearbox Dataset.zip (15776.9MB)
+
+=== ALL DOWNLOAD CANDIDATES ===
+15776.9MB | SNU Planetary Gearbox Dataset | https://ndownloader.figshare.com/files/68834563
+1201.6MB | SNU Planetary Gearbox Dataset | https://ndownloader.figshare.com/files/68833543
+47.4MB | <b>Towards a Wearable Polysomnography Approach: A  | https://ndownloader.figshare.com/files/68077837
+25.7MB | Synchronized Vibration Data Collection for Fault D | https://ndownloader.figshare.com/files/62827030
+24.7MB | Synchronized Vibration Data Collection for Fault D | https://ndownloader.figshare.com/files/62827033
+15.5MB | Rapid Detection
+of Dextromethorphan in Saliva and
+ | https://ndownloader.figshare.com/files/68026585

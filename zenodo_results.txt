@@ -1,0 +1,196 @@
+﻿
+=== [turbofan] ===
+  ID:22832899 | Data-set of gradient tower for quality-controlled and surface-flux estimations i
+  Files:14 | Size:1672.0MB
+    - OGHYO_Minute_Fluxes_2018_2026.nc (346.9MB) -> https://zenodo.org/api/records/22832899/files/OGHYO_Minute_Fluxes_2018_2026.nc/content
+    - OGHYO_GradientTower_Dataset_2018_2026.nc (1251.9MB) -> https://zenodo.org/api/records/22832899/files/OGHYO_GradientTower_Dataset_2018_2026.nc/content
+    - OGHYO_30min_Fluxes_2018_2026.schema_verification.csv (0.0MB) -> https://zenodo.org/api/records/22832899/files/OGHYO_30min_Fluxes_2018_2026.schema_verification.csv/content
+  ID:22834293 | DEVELOPMENT TRENDS OF UNMANNED AERIAL VEHICLES AND ELECTRONIC WARFARE TECHNOLOGI
+  Files:1 | Size:1.2MB
+    - 139-144.pdf (1.2MB) -> https://zenodo.org/api/records/22834293/files/139-144.pdf/content
+  ID:22832973 | Archetypes of Rural Users in Sub-Saharan Africa for Load Demand Estimation - Dom
+  Files:20 | Size:177.0MB
+    - facility_type_crosswalk.csv (0.0MB) -> https://zenodo.org/api/records/22832973/files/facility_type_crosswalk.csv/content
+    - cooling_regimes.csv (0.0MB) -> https://zenodo.org/api/records/22832973/files/cooling_regimes.csv/content
+    - health_facility_tiers.csv (0.0MB) -> https://zenodo.org/api/records/22832973/files/health_facility_tiers.csv/content
+  ID:22788425 | Online particle-filter OSSE diagnostics and experiment code for AMOC reconstruct
+  Files:2 | Size:6.4MB
+    - README.md (0.0MB) -> https://zenodo.org/api/records/22788425/files/README.md/content
+    - pypfda-osse-data-v2.0.zip (6.4MB) -> https://zenodo.org/api/records/22788425/files/pypfda-osse-data-v2.0.zip/content
+  ID:22831446 | Dataset for: State-Dependent 3D Enhancer Architecture Resolves a Shared Schizoph
+  Files:5 | Size:269.0MB
+    - figs.zip (135.3MB) -> https://zenodo.org/api/records/22831446/files/figs.zip/content
+    - Supplemental_Data.pdf (0.7MB) -> https://zenodo.org/api/records/22831446/files/Supplemental_Data.pdf/content
+    - Manuscript_Preprint.pdf (0.7MB) -> https://zenodo.org/api/records/22831446/files/Manuscript_Preprint.pdf/content
+
+=== [bearing] ===
+  ID:22836197 | Spatial Planning-Housing Nexus: The Ramifications of Dual Governance in Rural Ar
+  Files:1 | Size:1.9MB
+    - Mudau, Manthwa and Mathiba_CYD.pdf (1.9MB) -> https://zenodo.org/api/records/22836197/files/Mudau,%20Manthwa%20and%20Mathiba_CYD.pdf/content
+  ID:22827152 | Data and code for: Seasonally Divergent Climate Responses to Afforestation and C
+  Files:4 | Size:1328.1MB
+    - plots_scripts.zip (49.2MB) -> https://zenodo.org/api/records/22827152/files/plots_scripts.zip/content
+    - analysis_scripts.zip (0.0MB) -> https://zenodo.org/api/records/22827152/files/analysis_scripts.zip/content
+    - model_data.zip (776.0MB) -> https://zenodo.org/api/records/22827152/files/model_data.zip/content
+  ID:22834762 | NATIONAL-CONCEPTUAL MODELS AND LINGUOCULTURAL FOUNDATIONS OF METAPHORS RELATED T
+  Files:1 | Size:0.2MB
+    - 150-154.pdf (0.2MB) -> https://zenodo.org/api/records/22834762/files/150-154.pdf/content
+  ID:22834747 | EuroFlood: a queryable cloud-native index for the CEMS-EFAS Satellite-Derived Fl
+  Files:6 | Size:154.0MB
+    - README.md (0.0MB) -> https://zenodo.org/api/records/22834747/files/README.md/content
+    - europe_flood_index.tif (135.8MB) -> https://zenodo.org/api/records/22834747/files/europe_flood_index.tif/content
+    - events.parquet (0.3MB) -> https://zenodo.org/api/records/22834747/files/events.parquet/content
+  ID:22834607 | GENRE STABILITY AND LINGUISTIC VARIATION IN FANTASY FICTION
+  Files:1 | Size:0.2MB
+    - 170-175.pdf (0.2MB) -> https://zenodo.org/api/records/22834607/files/170-175.pdf/content
+
+=== [uav] ===
+  ID:22832899 | Data-set of gradient tower for quality-controlled and surface-flux estimations i
+  Files:14 | Size:1672.0MB
+    - OGHYO_Minute_Fluxes_2018_2026.nc (346.9MB) -> https://zenodo.org/api/records/22832899/files/OGHYO_Minute_Fluxes_2018_2026.nc/content
+    - OGHYO_GradientTower_Dataset_2018_2026.nc (1251.9MB) -> https://zenodo.org/api/records/22832899/files/OGHYO_GradientTower_Dataset_2018_2026.nc/content
+    - OGHYO_30min_Fluxes_2018_2026.schema_verification.csv (0.0MB) -> https://zenodo.org/api/records/22832899/files/OGHYO_30min_Fluxes_2018_2026.schema_verification.csv/content
+  ID:22834403 | ╨¥╨ò╨Ö╨á╨₧╨ô╨ú╨£╨₧╨á╨É╨¢╨¼╨¥╨½╨ò ╨£╨ò╨Ñ╨É╨¥╨ÿ╨ù╨£╨½ ╨ú ╨æ╨₧╨¢╨¼╨¥╨½╨Ñ ╨í ╨í╨ò╨á╨ö╨ò╨º╨¥╨₧╨Ö ╨¥╨ò╨ö╨₧╨í╨ó╨É╨ó╨₧╨º╨¥╨₧╨í╨ó╨¼╨« ╨¥╨É ╨ñ╨₧╨¥╨ò ╨£╨ò╨ó╨É╨æ╨₧
+  Files:1 | Size:0.3MB
+    - 14-20.pdf (0.3MB) -> https://zenodo.org/api/records/22834403/files/14-20.pdf/content
+  ID:22834293 | DEVELOPMENT TRENDS OF UNMANNED AERIAL VEHICLES AND ELECTRONIC WARFARE TECHNOLOGI
+  Files:1 | Size:1.2MB
+    - 139-144.pdf (1.2MB) -> https://zenodo.org/api/records/22834293/files/139-144.pdf/content
+  ID:22832973 | Archetypes of Rural Users in Sub-Saharan Africa for Load Demand Estimation - Dom
+  Files:20 | Size:177.0MB
+    - facility_type_crosswalk.csv (0.0MB) -> https://zenodo.org/api/records/22832973/files/facility_type_crosswalk.csv/content
+    - cooling_regimes.csv (0.0MB) -> https://zenodo.org/api/records/22832973/files/cooling_regimes.csv/content
+    - health_facility_tiers.csv (0.0MB) -> https://zenodo.org/api/records/22832973/files/health_facility_tiers.csv/content
+  ID:22823137 | Local buckling and post-buckling failure of pultruded FRP I-section columns with
+  Files:1 | Size:0.5MB
+    - FRP2_data_and_code.zip (0.5MB) -> https://zenodo.org/api/records/22823137/files/FRP2_data_and_code.zip/content
+
+=== [dgen380] ===
+  ID:22815397 | MURAKKAB QO'SHIMCHALI MAYDA DONALI YO'L BETONLARINING TURLARI VA TASNIFI
+  Files:1 | Size:0.2MB
+    - 307-310.pdf (0.2MB) -> https://zenodo.org/api/records/22815397/files/307-310.pdf/content
+  ID:22776069 | PALEOS: Thermodynamic Equation of State Tables for Fe, MgSiOΓéâ, and HΓééO at Planet
+  Files:5 | Size:2186.6MB
+    - paleos_mgsio3_eos_table_pt.dat (46.4MB) -> https://zenodo.org/api/records/22776069/files/paleos_mgsio3_eos_table_pt.dat/content
+    - paleos_mgsio3_eos_table_pt_highres.dat (739.6MB) -> https://zenodo.org/api/records/22776069/files/paleos_mgsio3_eos_table_pt_highres.dat/content
+    - paleos_water_eos_table_pt.dat (183.8MB) -> https://zenodo.org/api/records/22776069/files/paleos_water_eos_table_pt.dat/content
+  ID:22692775 | Data and code for: Vibroacoustic reproducibility of 3D-printed PLA+ and wood sou
+  Files:1 | Size:69.4MB
+    - zenodo_deposit.zip (69.4MB) -> https://zenodo.org/api/records/22692775/files/zenodo_deposit.zip/content
+  ID:22727811 | EFFECTS OF MULTIMODAL SPEAKING TASKS ON YOUNG EFL LEARNERS' SPEAKING FLUENCY, PR
+  Files:1 | Size:0.3MB
+    - 216-236.pdf (0.3MB) -> https://zenodo.org/api/records/22727811/files/216-236.pdf/content
+  ID:22727692 | EFFECTS OF MULTIMODAL SPEAKING TASKS ON YOUNG EFL LEARNERS' SPEAKING FLUENCY, PR
+  Files:1 | Size:0.2MB
+    - 209-215.pdf (0.2MB) -> https://zenodo.org/api/records/22727692/files/209-215.pdf/content
+
+=== [piston] ===
+  ID:22832899 | Data-set of gradient tower for quality-controlled and surface-flux estimations i
+  Files:14 | Size:1672.0MB
+    - OGHYO_Minute_Fluxes_2018_2026.nc (346.9MB) -> https://zenodo.org/api/records/22832899/files/OGHYO_Minute_Fluxes_2018_2026.nc/content
+    - OGHYO_GradientTower_Dataset_2018_2026.nc (1251.9MB) -> https://zenodo.org/api/records/22832899/files/OGHYO_GradientTower_Dataset_2018_2026.nc/content
+    - OGHYO_30min_Fluxes_2018_2026.schema_verification.csv (0.0MB) -> https://zenodo.org/api/records/22832899/files/OGHYO_30min_Fluxes_2018_2026.schema_verification.csv/content
+  ID:22831483 | Annual airborne laser scanning-based forest aboveground biomass and stem volume 
+  Files:28 | Size:13449.9MB
+    - 2015_Vol_Maine.tif (542.9MB) -> https://zenodo.org/api/records/22831483/files/2015_Vol_Maine.tif/content
+    - 2016_Vol_Maine.tif (543.0MB) -> https://zenodo.org/api/records/22831483/files/2016_Vol_Maine.tif/content
+    - 2013_Vol_Maine.tif (542.7MB) -> https://zenodo.org/api/records/22831483/files/2013_Vol_Maine.tif/content
+  ID:22834388 | MODERN EPIDEMIOLOGY OF GLAUCOMA: GLOBAL TRENDS AND THE SITUATION IN UZBEKISTAN
+  Files:1 | Size:0.3MB
+    - 256-259.pdf (0.3MB) -> https://zenodo.org/api/records/22834388/files/256-259.pdf/content
+  ID:22834293 | DEVELOPMENT TRENDS OF UNMANNED AERIAL VEHICLES AND ELECTRONIC WARFARE TECHNOLOGI
+  Files:1 | Size:1.2MB
+    - 139-144.pdf (1.2MB) -> https://zenodo.org/api/records/22834293/files/139-144.pdf/content
+  ID:22834226 | Geo-ecological mechanisms of water diplomacy in the management of transboundary 
+  Files:1 | Size:0.2MB
+    - 95-102.pdf (0.2MB) -> https://zenodo.org/api/records/22834226/files/95-102.pdf/content
+
+=== [phm_aircraft] ===
+  ID:22836335 | Employee ESG perception and organizational commitment in Vietnamese logistics an
+  Files:18 | Size:0.3MB
+    - 07_endogeneity_gaussian_copula.R (0.0MB) -> https://zenodo.org/api/records/22836335/files/07_endogeneity_gaussian_copula.R/content
+    - codebook.csv (0.0MB) -> https://zenodo.org/api/records/22836335/files/codebook.csv/content
+    - README.md (0.0MB) -> https://zenodo.org/api/records/22836335/files/README.md/content
+  ID:22771083 | ReEDS: Offshore wind profiles
+  Files:7 | Size:5742.4MB
+    - cf_wind-ofs_open.h5 (3243.0MB) -> https://zenodo.org/api/records/22771083/files/cf_wind-ofs_open.h5/content
+    - cf_wind-ofs_reference.h5 (1428.0MB) -> https://zenodo.org/api/records/22771083/files/cf_wind-ofs_reference.h5/content
+    - sc_wind-ofs_open.csv (0.4MB) -> https://zenodo.org/api/records/22771083/files/sc_wind-ofs_open.csv/content
+  ID:22835120 | Geospatial Database of Avocado Production at Municipal Level in Mexico, 2025 - I
+  Files:3 | Size:56.8MB
+    - avocado_2025_MunicipalityData.gpkg (56.8MB) -> https://zenodo.org/api/records/22835120/files/avocado_2025_MunicipalityData.gpkg/content
+    - data_dictionary_avocado_2025.csv (0.0MB) -> https://zenodo.org/api/records/22835120/files/data_dictionary_avocado_2025.csv/content
+    - readme.txt (0.0MB) -> https://zenodo.org/api/records/22835120/files/readme.txt/content
+  ID:22836289 | BMP Dataset and Analysis
+  Files:1 | Size:4.5MB
+    - Supplementary_Data (2).zip (4.5MB) -> https://zenodo.org/api/records/22836289/files/Supplementary_Data%20(2).zip/content
+  ID:22835235 | Oil and Gas Infrastructure Mapping (OGIM) database v3.0
+  Files:1 | Size:3264.2MB
+    - OGIM_v3.0.gpkg (3264.2MB) -> https://zenodo.org/api/records/22835235/files/OGIM_v3.0.gpkg/content
+
+=== [gasturbine] ===
+  ID:22771083 | ReEDS: Offshore wind profiles
+  Files:7 | Size:5742.4MB
+    - cf_wind-ofs_open.h5 (3243.0MB) -> https://zenodo.org/api/records/22771083/files/cf_wind-ofs_open.h5/content
+    - cf_wind-ofs_reference.h5 (1428.0MB) -> https://zenodo.org/api/records/22771083/files/cf_wind-ofs_reference.h5/content
+    - sc_wind-ofs_open.csv (0.4MB) -> https://zenodo.org/api/records/22771083/files/sc_wind-ofs_open.csv/content
+  ID:22835120 | Geospatial Database of Avocado Production at Municipal Level in Mexico, 2025 - I
+  Files:3 | Size:56.8MB
+    - avocado_2025_MunicipalityData.gpkg (56.8MB) -> https://zenodo.org/api/records/22835120/files/avocado_2025_MunicipalityData.gpkg/content
+    - data_dictionary_avocado_2025.csv (0.0MB) -> https://zenodo.org/api/records/22835120/files/data_dictionary_avocado_2025.csv/content
+    - readme.txt (0.0MB) -> https://zenodo.org/api/records/22835120/files/readme.txt/content
+  ID:22835235 | Oil and Gas Infrastructure Mapping (OGIM) database v3.0
+  Files:1 | Size:3264.2MB
+    - OGIM_v3.0.gpkg (3264.2MB) -> https://zenodo.org/api/records/22835235/files/OGIM_v3.0.gpkg/content
+  ID:22832899 | Data-set of gradient tower for quality-controlled and surface-flux estimations i
+  Files:14 | Size:1672.0MB
+    - OGHYO_Minute_Fluxes_2018_2026.nc (346.9MB) -> https://zenodo.org/api/records/22832899/files/OGHYO_Minute_Fluxes_2018_2026.nc/content
+    - OGHYO_GradientTower_Dataset_2018_2026.nc (1251.9MB) -> https://zenodo.org/api/records/22832899/files/OGHYO_GradientTower_Dataset_2018_2026.nc/content
+    - OGHYO_30min_Fluxes_2018_2026.schema_verification.csv (0.0MB) -> https://zenodo.org/api/records/22832899/files/OGHYO_30min_Fluxes_2018_2026.schema_verification.csv/content
+  ID:22834771 | Multi-Scale Mechanistic and Environmental Assessment of 100% Ferrochrome Slag Co
+  Files:1 | Size:0.0MB
+    - ICLCA26_0124_FCSCA_Experimental_Raw_Data.xlsx (0.0MB) -> https://zenodo.org/api/records/22834771/files/ICLCA26_0124_FCSCA_Experimental_Raw_Data.xlsx/content
+
+=== [ims_bearing] ===
+  ID:22836335 | Employee ESG perception and organizational commitment in Vietnamese logistics an
+  Files:18 | Size:0.3MB
+    - 07_endogeneity_gaussian_copula.R (0.0MB) -> https://zenodo.org/api/records/22836335/files/07_endogeneity_gaussian_copula.R/content
+    - codebook.csv (0.0MB) -> https://zenodo.org/api/records/22836335/files/codebook.csv/content
+    - README.md (0.0MB) -> https://zenodo.org/api/records/22836335/files/README.md/content
+  ID:22836197 | Spatial Planning-Housing Nexus: The Ramifications of Dual Governance in Rural Ar
+  Files:1 | Size:1.9MB
+    - Mudau, Manthwa and Mathiba_CYD.pdf (1.9MB) -> https://zenodo.org/api/records/22836197/files/Mudau,%20Manthwa%20and%20Mathiba_CYD.pdf/content
+  ID:22771083 | ReEDS: Offshore wind profiles
+  Files:7 | Size:5742.4MB
+    - cf_wind-ofs_open.h5 (3243.0MB) -> https://zenodo.org/api/records/22771083/files/cf_wind-ofs_open.h5/content
+    - cf_wind-ofs_reference.h5 (1428.0MB) -> https://zenodo.org/api/records/22771083/files/cf_wind-ofs_reference.h5/content
+    - sc_wind-ofs_open.csv (0.4MB) -> https://zenodo.org/api/records/22771083/files/sc_wind-ofs_open.csv/content
+  ID:22835235 | Oil and Gas Infrastructure Mapping (OGIM) database v3.0
+  Files:1 | Size:3264.2MB
+    - OGIM_v3.0.gpkg (3264.2MB) -> https://zenodo.org/api/records/22835235/files/OGIM_v3.0.gpkg/content
+  ID:22835521 | Traditional Pharaonic Wrestling: Historical Evidence, Technical Representation a
+  Files:1 | Size:0.1MB
+    - Traditional Pharaonic Wrestling.pdf (0.1MB) -> https://zenodo.org/api/records/22835521/files/Traditional%20Pharaonic%20Wrestling.pdf/content
+
+
+=== DOWNLOAD CANDIDATES (>50MB) ===
+  turbofan: Data-set of gradient tower for quality-controlled and surfac | 1672MB | zenodo.org/records/22832899
+  turbofan: Archetypes of Rural Users in Sub-Saharan Africa for Load Dem | 177MB | zenodo.org/records/22832973
+  turbofan: Dataset for: State-Dependent 3D Enhancer Architecture Resolv | 269MB | zenodo.org/records/22831446
+  bearing: Data and code for: Seasonally Divergent Climate Responses to | 1328MB | zenodo.org/records/22827152
+  bearing: EuroFlood: a queryable cloud-native index for the CEMS-EFAS  | 154MB | zenodo.org/records/22834747
+  uav: Data-set of gradient tower for quality-controlled and surfac | 1672MB | zenodo.org/records/22832899
+  uav: Archetypes of Rural Users in Sub-Saharan Africa for Load Dem | 177MB | zenodo.org/records/22832973
+  dgen380: PALEOS: Thermodynamic Equation of State Tables for Fe, MgSiO | 2187MB | zenodo.org/records/22776069
+  dgen380: Data and code for: Vibroacoustic reproducibility of 3D-print | 69MB | zenodo.org/records/22692775
+  piston: Data-set of gradient tower for quality-controlled and surfac | 1672MB | zenodo.org/records/22832899
+  piston: Annual airborne laser scanning-based forest aboveground biom | 13450MB | zenodo.org/records/22831483
+  phm_aircraft: ReEDS: Offshore wind profiles | 5742MB | zenodo.org/records/22771083
+  phm_aircraft: Geospatial Database of Avocado Production at Municipal Level | 57MB | zenodo.org/records/22835120
+  phm_aircraft: Oil and Gas Infrastructure Mapping (OGIM) database v3.0 | 3264MB | zenodo.org/records/22835235
+  gasturbine: ReEDS: Offshore wind profiles | 5742MB | zenodo.org/records/22771083
+  gasturbine: Geospatial Database of Avocado Production at Municipal Level | 57MB | zenodo.org/records/22835120
+  gasturbine: Oil and Gas Infrastructure Mapping (OGIM) database v3.0 | 3264MB | zenodo.org/records/22835235
+  gasturbine: Data-set of gradient tower for quality-controlled and surfac | 1672MB | zenodo.org/records/22832899
+  ims_bearing: ReEDS: Offshore wind profiles | 5742MB | zenodo.org/records/22771083
+  ims_bearing: Oil and Gas Infrastructure Mapping (OGIM) database v3.0 | 3264MB | zenodo.org/records/22835235

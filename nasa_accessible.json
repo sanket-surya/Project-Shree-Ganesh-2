@@ -1,0 +1,20 @@
+[
+  [
+    "nasa_igbt_aging",
+    "NASA IGBT Accelerated Aging",
+    "https://phm-datasets.s3.amazonaws.com/NASA/8.+IGBT+Accelerated+Aging.zip",
+    240502381
+  ],
+  [
+    "nasa_hirf_generator",
+    "NASA Generator (GE-UTK)",
+    "https://phm-datasets.s3.amazonaws.com/GE-UTK/FMCRD_Data.zip",
+    22877532477
+  ],
+  [
+    "nasa_algae",
+    "NASA Algae Raceway (Biofuel engine)",
+    "https://phm-datasets.s3.amazonaws.com/NASA/1.+Algae+Raceway.zip",
+    10180512
+  ]
+]

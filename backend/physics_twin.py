@@ -83,7 +83,197 @@ ENGINE_PROFILES = {
     }
 }
 
+
+# ============================================================
+# ISA STANDARD ATMOSPHERE MODEL (DO-278A / ICAO Doc 7488)
+# Used for altitude-corrected engine performance predictions
+# ============================================================
+class ISAAtmosphereModel:
+    """
+    International Standard Atmosphere (ISA) model for MALE UAV altitude corrections.
+    Troposphere model (0–11,000m) per ICAO Doc 7488/3.
+    Covers Rotax 914F operational envelope up to 20,000 ft.
+    """
+    T0  = 288.15    # Sea level temperature (K)
+    P0  = 101325.0  # Sea level pressure (Pa)
+    L   = 0.0065    # Lapse rate (K/m)
+    R   = 287.05    # Gas constant for dry air (J/kg·K)
+    g   = 9.80665   # Gravity (m/s²)
+    rho0 = 1.2250   # Sea level density (kg/m³)
+
+    # Rotax 914F turbocharger critical altitude (maintains 100% power below)
+    ROTAX_914F_CRITICAL_ALT_M = 3810.0  # ~12,500 ft
+
+    @classmethod
+    def conditions(cls, altitude_m: float) -> dict:
+        """Returns ISA temperature, pressure, density at given altitude."""
+        alt = max(0.0, min(altitude_m, 11000.0))  # Clamp to troposphere
+        T   = cls.T0 - cls.L * alt
+        P   = cls.P0 * ((1.0 - cls.L * alt / cls.T0) ** (cls.g / (cls.L * cls.R)))
+        rho = P / (cls.R * T)
+        sigma = rho / cls.rho0
+        return {
+            "temperature_k": T,
+            "temperature_c": T - 273.15,
+            "pressure_pa": P,
+            "pressure_hpa": P / 100.0,
+            "density_kgm3": rho,
+            "density_ratio": sigma,
+            "altitude_m": alt,
+            "altitude_ft": alt * 3.28084,
+        }
+
+    @classmethod
+    def power_fraction(cls, altitude_m: float, turbocharged: bool = True,
+                       critical_alt_m: float = None) -> float:
+        """
+        Returns power fraction (0–1.0) at altitude vs sea level.
+        Turbocharged engine maintains 1.0 up to critical_alt_m,
+        then falls off per density ratio^0.5.
+        """
+        crit = critical_alt_m if critical_alt_m else cls.ROTAX_914F_CRITICAL_ALT_M
+        isa = cls.conditions(altitude_m)
+        sigma = isa["density_ratio"]
+        if turbocharged and altitude_m <= crit:
+            return 1.0
+        return sigma ** 0.5
+
+    @classmethod
+    def bsfc_altitude_correction(cls, bsfc_sl: float, altitude_m: float) -> float:
+        """
+        BSFC correction for altitude using GA piston empirical constants.
+        From SAE J1349 / BSFC_alt = BSFC_SL × ((σ - E)/(1 - E))^F
+        Constants E=0.065, F=1.117 (GA piston engine standard).
+        """
+        isa = cls.conditions(altitude_m)
+        sigma = max(0.1, isa["density_ratio"])
+        E, F = 0.065, 1.117
+        return bsfc_sl * ((sigma - E) / (1.0 - E)) ** F
+
+
+# ============================================================
+# MISSION RELIABILITY INDEX (MRI) CALCULATOR
+# Implements: Weibull failure model + AHP multi-parameter fusion
+# Directly satisfies PS SIH26054: "Mission Reliability Enhancement"
+# ============================================================
+class MissionReliabilityIndex:
+    """
+    Pre-flight and real-time Mission Reliability Index calculator.
+    Uses Weibull distribution for failure probability estimation
+    and AHP (Analytic Hierarchy Process) for multi-parameter fusion.
+
+    Output: MRI score 0.0–1.0
+      ≥ 0.85 → GO  (green)
+      0.70–0.85 → CAUTION (amber)
+      < 0.70  → NO-GO (red)
+    """
+
+    # AHP weights (tuned for safety-critical UAV context)
+    W_HI         = 0.35   # Overall Health Index (AHP priority 1)
+    W_FAIL_PROB  = 0.30   # 1 - P(failure during mission) (AHP priority 2)
+    W_RUL_RATIO  = 0.25   # RUL / mission_duration (AHP priority 3)
+    W_OIL_MARGIN = 0.10   # Oil pressure margin ratio (AHP priority 4)
+
+    # Weibull parameters for piston aircraft engines
+    WEIBULL_BETA  = 3.5    # Shape: wear-out failure mode (β > 1)
+    WEIBULL_ETA   = 3200.0 # Scale: characteristic life ≈ MTTF (flight hours)
+
+    # Decision thresholds
+    GO_THRESHOLD      = 0.85
+    CAUTION_THRESHOLD = 0.70
+
+    @classmethod
+    def weibull_failure_prob(cls, hours_accumulated: float,
+                              mission_duration_hrs: float) -> float:
+        """
+        P(failure during mission) using Weibull reliability:
+          R(t) = e^(-(t/η)^β)
+          P_fail = R(t_start) - R(t_end)  (conditional probability)
+        """
+        import math
+        t_start = max(0.0, hours_accumulated)
+        t_end   = t_start + max(0.1, mission_duration_hrs)
+        try:
+            R_start = math.exp(-((t_start / cls.WEIBULL_ETA) ** cls.WEIBULL_BETA))
+            R_end   = math.exp(-((t_end   / cls.WEIBULL_ETA) ** cls.WEIBULL_BETA))
+            return max(0.0, min(1.0, R_start - R_end))
+        except Exception:
+            return 0.05  # Default conservative estimate
+
+    @classmethod
+    def compute(cls,
+                health_index: float,
+                rul_hours: float,
+                mission_duration_hrs: float,
+                hours_accumulated: float,
+                oil_press_bar: float,
+                oil_press_nominal: float = 3.8) -> dict:
+        """
+        Compute Mission Reliability Index.
+
+        Args:
+            health_index:         Overall HI (0–1.0)
+            rul_hours:            Remaining Useful Life in hours
+            mission_duration_hrs: Planned mission duration in hours
+            hours_accumulated:    Engine hours flown so far
+            oil_press_bar:        Current oil pressure reading
+            oil_press_nominal:    Engine nominal oil pressure
+
+        Returns dict with MRI score, decision, and sub-indices.
+        """
+        # Sub-index 1: Health Index (already 0-1)
+        hi_norm = max(0.0, min(1.0, health_index))
+
+        # Sub-index 2: 1 - P(failure during mission)
+        p_fail  = cls.weibull_failure_prob(hours_accumulated, mission_duration_hrs)
+        fail_si = max(0.0, 1.0 - p_fail * 20.0)  # Scale: 5% fail → ~0 SI
+
+        # Sub-index 3: RUL vs mission duration (margin ratio, capped at 1.0)
+        rul_ratio = min(1.0, rul_hours / max(1.0, mission_duration_hrs * 5.0))
+
+        # Sub-index 4: Oil pressure margin
+        oil_margin = max(0.0, min(1.0, oil_press_bar / max(0.1, oil_press_nominal)))
+
+        # AHP weighted sum
+        mri = (cls.W_HI         * hi_norm  +
+               cls.W_FAIL_PROB  * fail_si  +
+               cls.W_RUL_RATIO  * rul_ratio +
+               cls.W_OIL_MARGIN * oil_margin)
+        mri = max(0.0, min(1.0, mri))
+
+        # Decision
+        if mri >= cls.GO_THRESHOLD:
+            decision = "GO"
+            decision_color = "green"
+        elif mri >= cls.CAUTION_THRESHOLD:
+            decision = "CAUTION"
+            decision_color = "amber"
+        else:
+            decision = "NO-GO"
+            decision_color = "red"
+
+        return {
+            "mri_score":          round(mri, 4),
+            "mri_pct":            round(mri * 100, 1),
+            "decision":           decision,
+            "decision_color":     decision_color,
+            "sub_health_index":   round(hi_norm, 4),
+            "sub_fail_prob_si":   round(fail_si, 4),
+            "p_fail_mission":     round(p_fail * 100, 3),
+            "sub_rul_ratio":      round(rul_ratio, 4),
+            "sub_oil_margin":     round(oil_margin, 4),
+            "rul_hours":          round(rul_hours, 1),
+            "mission_duration_hrs": round(mission_duration_hrs, 2),
+            "hours_accumulated":  round(hours_accumulated, 1),
+            "weibull_beta":       cls.WEIBULL_BETA,
+            "weibull_eta":        cls.WEIBULL_ETA,
+            "go_threshold":       cls.GO_THRESHOLD,
+            "caution_threshold":  cls.CAUTION_THRESHOLD,
+        }
+
+
 class AeroPistonTwinPhysics:
+
     def __init__(self):
         # Engine Architecture (Modular Engine-Agnostic Core)
         self.active_engine_id = "ROTAX_914F"
