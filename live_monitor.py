@@ -2,7 +2,7 @@ import os, time, sys
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-base = r'ml_models\data\real_datasets'
+base = r'D:\AeroTwin_Datasets'
 
 checks = [
     ('xjtu_sy_bearing_full', 'XJTU-SY_Bearing_Datasets.zip', 4271),
