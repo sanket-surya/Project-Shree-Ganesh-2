@@ -1,73 +1,96 @@
-import os, time, sys
+# -*- coding: utf-8 -*-
+"""
+AeroTwin LIVE Monitor — Press Ctrl+C to stop
+Run: python live_monitor.py
+"""
+import sys, io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+import os, time, shutil
 
-sys.stdout.reconfigure(encoding='utf-8')
+BASE = 'D:/AeroTwin_Datasets'
 
-base = r'D:\AeroTwin_Datasets'
-
-checks = [
-    ('xjtu_sy_bearing_full', 'XJTU-SY_Bearing_Datasets.zip', 4271),
-    ('snu_planetary_gearbox', 'SNU_Gearbox_full.zip', 15776),
-    ('snu_planetary_gearbox', 'SNU_Gearbox_code.zip', 1201),
+TARGETS = [
+    ('SNU Gearbox',       'snu_planetary_gearbox',  15776),
+    ('N-CMAPSS',          'nasa_ncmapss',            15030),
+    ('RflyMAD Real',      'rflymad',                 19183),
+    ('RflyMAD-HIL',       'rflymad_hil',             23987),
+    ('RflyMAD-SIL',       'rflymad_sil',             22676),
+    ('RflyMAD+ROS',       'rflymad_withros',         15630),
+    ('UAV-FD',            'uavfd_actuator_fault_zenodo', 838),
+    ('IMS Bearing',       'ims_nasa',                6000),
 ]
 
-os.system('cls')
+DONE = [
+    ('FEMTO Bearing',     'femto_bearing_vibration'),
+    ('XJTU-SY',          'xjtu_sy_bearing_full'),
+    ('ALFA UAV',          'alfa_uav_engine_failure'),
+    ('Paderborn',         'pedrobearing'),
+    ('PHM 2024',          'phm_2024'),
+    ('MFPT',              'mfpt_bearing'),
+    ('C-MAPSS',           'nasa_cmapss'),
+    ('Marine Engine',     'marine_engine_fault'),
+    ('NASA IGBT',         'nasa_igbt_aging'),
+    ('UAV-FD',            'uavfd_actuator_fault_zenodo'),
+]
 
-print('=' * 65)
-print('  AeroTwin - Live Download Monitor  (Ctrl+C to stop)')
-print('=' * 65)
+prev = {}
+
+def get_mb(folder):
+    fp = os.path.join(BASE, folder)
+    if not os.path.exists(fp): return 0
+    return sum(os.path.getsize(os.path.join(r,f))
+               for r,d,files in os.walk(fp) for f in files) / 1048576
+
+def bar(pct, w=20):
+    f = int(pct/100*w)
+    return '█'*f + '░'*(w-f)
 
 while True:
-    print('\033[4;0H', end='')  # Move cursor to row 4
-    
-    total_done = 0
-    total_target = 0
-    
-    for folder, fname, target_mb in checks:
-        fp = os.path.join(base, folder, fname)
-        if os.path.exists(fp):
-            sz = os.path.getsize(fp) / 1048576
-            pct = min(sz / target_mb * 100, 100)
-            filled = int(pct / 5)
-            bar = '#' * filled + '-' * (20 - filled)
-            status = 'DONE!' if pct >= 99.5 else 'downloading...'
-            line = f'  {fname[:28]:<28} {sz:>7.1f}/{target_mb} MB [{bar}] {pct:5.1f}% {status}'
-            total_done += sz
-            total_target += target_mb
+    os.system('cls')
+    now = time.strftime('%H:%M:%S')
+
+    print('╔══════════════════════════════════════════════════════╗')
+    print('║   🔥 AeroTwin Download Monitor  |  ' + now + '         ║')
+    print('╠══════════════════════════════════════════════════════╣')
+    print('║  ⬇️  DOWNLOADING                                      ║')
+    print('╠══════════════════════════════════════════════════════╣')
+
+    total_down = 0
+    total_tgt = 0
+    for name, folder, target_mb in TARGETS:
+        mb = get_mb(folder)
+        pct = min(mb/target_mb*100, 100)
+        spd = (mb - prev.get(folder, mb)) / 10
+        prev[folder] = mb
+        eta_s = (target_mb-mb)/max(spd,0.05)
+        eta = f'{int(eta_s//3600)}h{int((eta_s%3600)//60)}m' if spd > 0.05 else '--'
+        if pct >= 99:
+            status = '✅ DONE'
         else:
-            line = f'  {fname[:28]:<28}    0.0/{target_mb} MB [--------------------]   0.0% not started'
-        
-        print(line)
-    
-    # Also show completed ones
-    completed = [
-        ('femto_bearing_vibration', 'femto_bearing.zip', 1103),
-        ('nasa_igbt_aging', '8._IGBT_Accelerated_Aging.zip', 229),
-        ('pronostia_ieee_phm2012', 'IEEE_PHM_2012_Bearing.7z', 186),
-        ('nasa_battery', 'battery.zip', 200),
-    ]
-    print()
-    print('  --- Completed ---')
-    for folder, fname, target_mb in completed:
-        fp = os.path.join(base, folder, fname)
-        if os.path.exists(fp):
-            sz = os.path.getsize(fp) / 1048576
-            print(f'  {fname[:28]:<28} {sz:>7.1f} MB  [####################] DONE!')
-    
-    # Grand total
-    total_all = 0
-    for folder in os.listdir(base):
-        fp = os.path.join(base, folder)
-        if os.path.isdir(fp):
-            for r, d, files in os.walk(fp):
-                for f in files:
-                    try:
-                        total_all += os.path.getsize(os.path.join(r, f))
-                    except:
-                        pass
-    
-    print()
-    print(f'  GRAND TOTAL ON DISK: {total_all/1073741824:.2f} GB')
-    print(f'  Last refresh: {time.strftime("%H:%M:%S")}  (refreshing every 5s)')
-    print('=' * 65)
-    
-    time.sleep(5)
+            status = f'{spd:.1f}MB/s ETA:{eta}'
+        b = bar(pct)
+        line = f'║ {name[:14]:<14} {b} {pct:5.1f}% {status[:14]}'
+        print(line.ljust(54) + '║')
+        total_down += mb
+        total_tgt += target_mb
+
+    print('╠══════════════════════════════════════════════════════╣')
+    print('║  ✅ ALREADY DONE                                      ║')
+    print('╠══════════════════════════════════════════════════════╣')
+
+    done_total = 0
+    for name, folder in DONE:
+        mb = get_mb(folder)
+        done_total += mb
+        if mb > 1:
+            print(f'║  ✅ {name:<18} {mb:>7.0f} MB'.ljust(54) + '║')
+
+    total_all = done_total + total_down
+    free = shutil.disk_usage('D:/').free / 1e9
+    print('╠══════════════════════════════════════════════════════╣')
+    print(f'║  💾 TOTAL on D:   {total_all/1024:>6.1f} GB  |  Free: {free:.0f} GB'.ljust(54) + '║')
+    print(f'║  📦 Active Queue: {total_down/1024:>6.1f}/{total_tgt/1024:.0f} GB'.ljust(54) + '║')
+    print('╚══════════════════════════════════════════════════════╝')
+    print('  Refreshing every 10s... Ctrl+C to stop')
+
+    time.sleep(10)
