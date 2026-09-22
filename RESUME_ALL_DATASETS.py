@@ -161,6 +161,18 @@ def main():
     dl_kaggle("RflyMAD-SIL", "xianglile/rflymad-sil", "rflymad_sil")
     dl_kaggle("RflyMAD-HIL", "xianglile/rflymad-hil", "rflymad_hil")
 
+    # 8. Engine Acoustic Emissions & Fault Detection (~450 MB)
+    dl_kaggle("Engine Acoustic Emissions", "julienjta/engine-acoustic-emissions", "engine_acoustic_emissions")
+
+    # 9. Engine Failure Multi-Sensor Telemetry (~380 MB)
+    dl_kaggle("Engine Failure Detection", "zeynepyk/engine-failure-detection-dataset", "engine_failure_detection")
+
+    # 10. SUBF Bearing Fault Vibration v1.0 (~1.6 GB)
+    dl_kaggle("SUBF Bearing Fault", "sumairaziz/subf-v1-0-dataset-bearing-fault-vibration-data", "subf_bearing_fault")
+
+    # 11. Bispectrum Signal Gearbox (~1.8 GB)
+    dl_kaggle("Bispectrum Signal Gearbox", "zacky131/bispectrum-signal", "bispectrum_signal")
+
     print("\n" + "*" * 65)
     print("   [ALL DATASETS DOWNLOADED AND VERIFIED!]")
     print("*" * 65)
