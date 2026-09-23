@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plane, Layers, Activity, Wrench, Rocket, ShieldCheck, Film } from 'lucide-react';
+import FleetHealthOverview from './components/FleetHealthOverview';
 import ThreeEngineTwin from './components/ThreeEngineTwin';
 import TelemetryGauges from './components/TelemetryGauges';
 import CylinderThermalMatrix from './components/CylinderThermalMatrix';
@@ -23,6 +24,7 @@ const TABS = [
   { id: 'twin',        label: 'DIGITAL TWIN',        icon: <Layers size={14} /> },
   { id: 'trends',      label: 'DEGRADATION TRENDS',   icon: <Activity size={14} /> },
   { id: 'preflight',   label: 'PRE-FLIGHT GO/NO-GO',  icon: <ShieldCheck size={14} /> },
+  { id: 'fleet',       label: 'FLEET HEALTH',         icon: <Plane size={14} className="text-cyan-400" /> },
   { id: 'replay',      label: 'MISSION REPLAY',       icon: <Film size={14} /> },
   { id: 'maintenance', label: 'MAINTENANCE',           icon: <Wrench size={14} /> },
   { id: 'cascade',     label: 'CASCADE FAILURE DEMO', icon: <Rocket size={14} className="text-orange-400" /> },
@@ -290,7 +292,7 @@ export default function App() {
         {activeTab === 'preflight' && (
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-3">
             <div className="xl:col-span-7 flex flex-col gap-3">
-              <PreFlightMRI />
+              <PreFlightMRI telemetry={currentTelem} />
               <AirworthinessReport telemetry={currentTelem} />
             </div>
             <div className="xl:col-span-5 flex flex-col gap-3">
@@ -331,6 +333,11 @@ export default function App() {
               <CanBusTerminal telemetry={currentTelem} />
             </div>
           </div>
+        )}
+
+        {/* ─ TAB: FLEET HEALTH ─────────────────────────────────────────────────── */}
+        {activeTab === 'fleet' && (
+          <FleetHealthOverview telemetry={currentTelem} />
         )}
 
         {/* ─ TAB: CASCADE FAILURE DEMO ─────────────────────────────────────────── */}
