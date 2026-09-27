@@ -1,112 +1,239 @@
 import React, { useEffect, useRef } from 'react';
 import { Activity } from 'lucide-react';
 
-const DEFAULT_FFT_PEAKS = [0.4, 0.9, 0.25, 0.55, 0.12, 0.08, 0.05, 0.03];
+const HISTORY = 120; // points to show
 
 export default function VibrationWaterfall({ telemetry }) {
-  const canvasRef = useRef(null);
-  const fftHistoryRef = useRef([]);
+  const canvasRef    = useRef(null);
+  const historyRef   = useRef([]);
+  const animFrameRef = useRef(null);
+  const phaseRef     = useRef(0);
 
   const overallG = telemetry?.state?.overall_vibration_g || 1.45;
-  const fftPeaks = telemetry?.state?.fft_spectrum || DEFAULT_FFT_PEAKS;
 
+  // Accumulate real telemetry values
+  useEffect(() => {
+    historyRef.current.push(overallG);
+    if (historyRef.current.length > HISTORY) historyRef.current.shift();
+  }, [overallG]);
+
+  // Status
+  const getStatus = (g) => {
+    if (g < 1.8) return { label: 'NOMINAL',   color: '#10b981', glow: 'rgba(16,185,129,0.5)' };
+    if (g < 2.8) return { label: 'ELEVATED',  color: '#f59e0b', glow: 'rgba(245,158,11,0.5)' };
+    return             { label: 'CRITICAL',   color: '#ef4444', glow: 'rgba(239,68,68,0.5)'  };
+  };
+
+  // Animate oscilloscope
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
 
-    // Push new spectrum to waterfall history
-    fftHistoryRef.current.unshift([...fftPeaks]);
-    if (fftHistoryRef.current.length > 30) {
-      fftHistoryRef.current.pop();
-    }
+    const draw = () => {
+      const W = canvas.width;
+      const H = canvas.height;
+      const PAD = { top: 14, right: 10, bottom: 18, left: 36 };
+      const cW = W - PAD.left - PAD.right;
+      const cH = H - PAD.top  - PAD.bottom;
+      const midY = PAD.top + cH / 2;
 
-    // Clear Canvas
-    ctx.fillStyle = '#080c14';
-    ctx.fillRect(0, 0, width, height);
+      const G_RANGE = 2.0; // ±1.0g around center shown
+      const toY = (g) => midY - ((g - overallG) / G_RANGE) * cH;
 
-    // Draw Frequency Grid & Labels
-    ctx.strokeStyle = 'rgba(56, 189, 248, 0.1)';
-    ctx.lineWidth = 1;
-    for (let x = 0; x < width; x += width / 8) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      ctx.stroke();
-    }
+      // ── Background ───────────────────────────────────────
+      ctx.fillStyle = '#020608';
+      ctx.fillRect(0, 0, W, H);
 
-    // Draw Waterfall Heatmap Rows
-    const rowHeight = height / 30;
-    fftHistoryRef.current.forEach((row, rIdx) => {
-      const y = rIdx * rowHeight;
-      const barWidth = width / row.length;
+      // CRT scanline effect
+      for (let y = 0; y < H; y += 3) {
+        ctx.fillStyle = 'rgba(0,0,0,0.18)';
+        ctx.fillRect(0, y, W, 1);
+      }
 
-      row.forEach((amp, cIdx) => {
-        const x = cIdx * barWidth;
-        // Map amplitude to color
-        let r = 0, g = 240, b = 255, a = 0.2;
-        if (amp > 2.0) { r = 239; g = 68; b = 68; a = 0.9; }
-        else if (amp > 1.2) { r = 245; g = 158; b = 11; a = 0.7; }
-        else if (amp > 0.6) { r = 16; g = 185; b = 129; a = 0.5; }
+      // ── Grid (oscilloscope-style) ────────────────────────
+      const COLS = 10, ROWS = 6;
+      ctx.strokeStyle = 'rgba(0,255,100,0.08)';
+      ctx.lineWidth = 0.5;
+      ctx.setLineDash([]);
+      for (let i = 0; i <= COLS; i++) {
+        const x = PAD.left + (i / COLS) * cW;
+        ctx.beginPath(); ctx.moveTo(x, PAD.top); ctx.lineTo(x, PAD.top + cH); ctx.stroke();
+      }
+      for (let i = 0; i <= ROWS; i++) {
+        const y = PAD.top + (i / ROWS) * cH;
+        ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + cW, y); ctx.stroke();
+      }
 
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a * (1 - rIdx / 32)})`;
-        ctx.fillRect(x + 1, y, barWidth - 2, rowHeight - 1);
+      // Centre tick marks (minor grid)
+      ctx.strokeStyle = 'rgba(0,255,100,0.05)';
+      for (let i = 0; i <= COLS * 5; i++) {
+        const x = PAD.left + (i / (COLS * 5)) * cW;
+        ctx.beginPath(); ctx.moveTo(x, midY - 3); ctx.lineTo(x, midY + 3); ctx.stroke();
+      }
+
+      // ── Y-axis labels ─────────────────────────────────────
+      const st = getStatus(overallG);
+      ctx.font = '8px monospace';
+      ctx.textAlign = 'right';
+      [overallG + 1.0, overallG + 0.5, overallG, overallG - 0.5, overallG - 1.0].forEach((g, i) => {
+        const y = PAD.top + (i / 4) * cH;
+        ctx.fillStyle = 'rgba(0,220,80,0.55)';
+        ctx.fillText(`${g.toFixed(1)}`, PAD.left - 3, y + 3);
       });
-    });
 
-    // Draw Top Real-time FFT Peak Outline Curve
-    ctx.beginPath();
-    const barW = width / fftPeaks.length;
-    fftPeaks.forEach((amp, idx) => {
-      const x = idx * barW + barW / 2;
-      const peakY = Math.max(10, height - (amp / 3.5) * height);
-      if (idx === 0) ctx.moveTo(x, peakY);
-      else ctx.lineTo(x, peakY);
-    });
-    ctx.strokeStyle = overallG > 2.5 ? '#ef4444' : '#00f0ff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+      // ── X-axis label ──────────────────────────────────────
+      ctx.fillStyle = 'rgba(0,200,70,0.4)';
+      ctx.textAlign = 'left';
+      ctx.fillText('TIME →', PAD.left, H - 4);
+      ctx.textAlign = 'right';
+      ctx.fillText('g-FORCE', PAD.left - 2, PAD.top - 2);
 
-  }, [fftPeaks, overallG]);
+      // ── Zero line (centre) ────────────────────────────────
+      ctx.strokeStyle = 'rgba(0,255,100,0.18)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(PAD.left, midY);
+      ctx.lineTo(PAD.left + cW, midY);
+      ctx.stroke();
+      ctx.setLineDash([]);
 
-  const getVibStatus = (g) => {
-    if (g < 1.8) return { text: 'NOMINAL (< 1.8G)', color: 'text-emerald-400', bg: 'bg-emerald-950/60 border-emerald-500/30' };
-    if (g < 2.8) return { text: 'ELEVATED (1.8 - 2.8G)', color: 'text-amber-400', bg: 'bg-amber-950/60 border-amber-500/30' };
-    return { text: 'CRITICAL VIBRATION (> 2.8G)', color: 'text-red-400', bg: 'bg-red-950/70 border-red-500/50 animate-pulse' };
-  };
+      // ── Build waveform from real data ─────────────────────
+      const data = historyRef.current;
+      const pts  = [];
 
-  const status = getVibStatus(overallG);
+      // Smooth the data using rolling avg to avoid jagged spikes
+      const smoothed = data.map((v, i) => {
+        const w = 3;
+        const slice = data.slice(Math.max(0, i - w), i + w + 1);
+        return slice.reduce((a, b) => a + b, 0) / slice.length;
+      });
+
+      // Add slight organic oscillation on top (simulates sensor noise)
+      phaseRef.current += 0.12;
+      smoothed.forEach((g, i) => {
+        const x   = PAD.left + (i / (HISTORY - 1)) * cW;
+        const noise = Math.sin(phaseRef.current + i * 0.4) * 0.04
+                    + Math.sin(phaseRef.current * 1.7 + i * 0.9) * 0.02;
+        const y = toY(g + noise);
+        pts.push({ x, y });
+      });
+
+      if (pts.length < 2) { animFrameRef.current = requestAnimationFrame(draw); return; }
+
+      // ── Glow passes ──────────────────────────────────────
+      [
+        { lw: 8, alpha: 0.08 },
+        { lw: 4, alpha: 0.18 },
+        { lw: 2, alpha: 0.55 },
+        { lw: 1, alpha: 1.00 },
+      ].forEach(({ lw, alpha }) => {
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) {
+          // Smooth curve
+          const cpx = (pts[i - 1].x + pts[i].x) / 2;
+          const cpy = (pts[i - 1].y + pts[i].y) / 2;
+          ctx.quadraticCurveTo(pts[i - 1].x, pts[i - 1].y, cpx, cpy);
+        }
+        ctx.strokeStyle = st.color.replace(')', `,${alpha})`).replace('#', 'rgba(').replace('rgba(#', 'rgba(');
+
+        // Hex to rgba manually
+        const hex = st.color;
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g2 = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        ctx.strokeStyle = `rgba(${r},${g2},${b},${alpha})`;
+        ctx.lineWidth = lw;
+        ctx.lineJoin = 'round';
+        ctx.lineCap  = 'round';
+        ctx.stroke();
+      });
+
+      // ── Live dot at end ───────────────────────────────────
+      const last = pts[pts.length - 1];
+      if (last) {
+        // Outer glow ring
+        const grad = ctx.createRadialGradient(last.x, last.y, 0, last.x, last.y, 10);
+        const r2 = parseInt(st.color.slice(1, 3), 16);
+        const g3 = parseInt(st.color.slice(3, 5), 16);
+        const b2 = parseInt(st.color.slice(5, 7), 16);
+        grad.addColorStop(0,   `rgba(${r2},${g3},${b2},0.8)`);
+        grad.addColorStop(0.5, `rgba(${r2},${g3},${b2},0.2)`);
+        grad.addColorStop(1,   `rgba(${r2},${g3},${b2},0)`);
+        ctx.beginPath();
+        ctx.arc(last.x, last.y, 10, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+        // Solid dot
+        ctx.beginPath();
+        ctx.arc(last.x, last.y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = st.color;
+        ctx.fill();
+      }
+
+      // ── Screen edge vignette ──────────────────────────────
+      const vgr = ctx.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, H*0.85);
+      vgr.addColorStop(0, 'rgba(0,0,0,0)');
+      vgr.addColorStop(1, 'rgba(0,0,0,0.55)');
+      ctx.fillStyle = vgr;
+      ctx.fillRect(0, 0, W, H);
+
+      animFrameRef.current = requestAnimationFrame(draw);
+    };
+
+    animFrameRef.current = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(animFrameRef.current);
+  }, [overallG]);
+
+  const st = getStatus(overallG);
 
   return (
-    <div className="gcs-card p-3 flex flex-col justify-between">
+    <div className="gcs-card p-3 flex flex-col gap-2">
+      {/* Header */}
       <div className="gcs-card-header">
         <span className="flex items-center gap-2">
-          <Activity size={16} className="text-cyan-400" />
-          VIBRATION FFT SPECTRAL WATERFALL
+          <Activity size={15} style={{ color: st.color }} />
+          VIBRATION OSCILLOSCOPE
         </span>
-        <span className={`text-[10px] font-mono ${status.color} ${status.bg} border px-2 py-0.5 rounded`}>
-          RMS: {overallG.toFixed(2)} G | {status.text}
+        <span
+          className="text-[10px] font-bold px-2 py-0.5 rounded border font-mono"
+          style={{ color: st.color, borderColor: st.color + '55', background: st.color + '15' }}
+        >
+          {overallG.toFixed(3)} G — {st.label}
         </span>
       </div>
 
-      {/* Waterfall Canvas */}
-      <div className="mt-2 relative rounded overflow-hidden border border-slate-800 bg-slate-950">
+      {/* Canvas */}
+      <div
+        className="relative rounded overflow-hidden"
+        style={{ background: '#020608', border: `1px solid ${st.color}22`, boxShadow: `0 0 12px ${st.glow}` }}
+      >
         <canvas
           ref={canvasRef}
-          width={360}
+          width={400}
           height={130}
-          className="w-full h-32 block"
+          className="w-full block"
+          style={{ height: '130px' }}
         />
-        {/* Frequency Band Labels */}
-        <div className="flex justify-between px-2 py-1 text-[9px] font-mono text-slate-400 bg-slate-900/90 border-t border-slate-800">
-          <span>0.5X (Misfire)</span>
-          <span>1X (Prop)</span>
-          <span>2X (Crank)</span>
-          <span>4X (Combust)</span>
-          <span>&gt;1kHz (Knock)</span>
+        {/* CRT corner labels */}
+        <div className="absolute top-1 left-10 text-[8px] font-mono" style={{ color: st.color + 'aa' }}>
+          CH1 · 0.5g/DIV · 1s/DIV
         </div>
+        <div className="absolute top-1 right-2 text-[8px] font-mono" style={{ color: st.color + 'aa' }}>
+          AUTO
+        </div>
+      </div>
+
+      {/* Status bar */}
+      <div className="flex items-center justify-between text-[9px] font-mono px-1">
+        <span style={{ color: st.color }}>● LIVE</span>
+        <span className="text-slate-500">TRIG: RISING EDGE</span>
+        <span className="text-slate-500">BW: 20kHz</span>
+        <span style={{ color: overallG >= 2.8 ? '#ef4444' : overallG >= 1.8 ? '#f59e0b' : '#10b981' }}>
+          {overallG >= 2.8 ? '⚠ CRITICAL' : overallG >= 1.8 ? '△ ELEVATED' : '✓ NOMINAL'}
+        </span>
       </div>
     </div>
   );

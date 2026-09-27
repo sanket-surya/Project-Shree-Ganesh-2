@@ -280,14 +280,10 @@ export default function App() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             title={tab.desc}
-            className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-semibold tracking-wide border-b-2 transition-all whitespace-nowrap ${
-              activeTab === tab.id ? 'border-b-2' : 'border-transparent'
-            }`}
+            className="flex items-center gap-2 px-3.5 py-2.5 text-xs font-semibold tracking-wide whitespace-nowrap transition-colors duration-150"
             style={activeTab === tab.id
-              ? { borderBottomColor: '#00D4FF', color: '#00D4FF', background: 'rgba(0,212,255,0.06)' }
-              : { borderBottomColor: 'transparent', color: 'var(--text-secondary)' }}
-            onMouseEnter={e => { if (activeTab !== tab.id) { e.currentTarget.style.color = '#E8F4FD'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}}
-            onMouseLeave={e => { if (activeTab !== tab.id) { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}}
+              ? { borderBottom: '2px solid #00D4FF', color: '#00D4FF', background: 'rgba(0,212,255,0.06)', marginBottom: '-1px' }
+              : { borderBottom: '2px solid transparent', color: 'var(--text-secondary)', marginBottom: '-1px' }}
           >
             {tab.icon}
             {tab.label}
