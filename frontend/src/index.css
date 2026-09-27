@@ -1,40 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  /* ── DRDO / Defense Avionics GCS Standard Palette (Calm, Minimal, Zero Disco) ── */
-  --bg-primary: #0a0d14;
-  --bg-secondary: #0f131d;
-  --bg-card: #131722;
-  --bg-card-hover: #171c2a;
-  --bg-card-inner: #0d1018;
-  
-  --border-card: #1e2434;
-  --border-subtle: #181d2a;
-  --border-hover: #2a334a;
-  --border-divider: #161a26;
+  /* ── DEEP SPACE TACTICAL — AeroTwin SIH 2026 ─────────────────────────── */
+  --bg-primary:       #070B14;
+  --bg-secondary:     #0A0F1C;
+  --bg-card:          #0D1425;
+  --bg-card-hover:    #101828;
+  --bg-card-inner:    #080D18;
 
-  /* Tactical Strict Functional Colors */
-  --accent-blue: #2563eb;
-  --accent-sky: #38bdf8;
-  --state-nominal: #10b981;
-  --state-caution: #f59e0b;
-  --state-critical: #ef4444;
+  --border-card:      #1A2640;
+  --border-subtle:    #131E33;
+  --border-hover:     #243550;
+  --border-divider:   #121C30;
 
-  /* Typography */
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  
-  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  /* ── Functional Accent Colors ─────────────────────────────────────── */
+  --accent-cyan:      #00D4FF;   /* Primary — live numbers, RPM, telemetry */
+  --accent-sky:       #38BEF8;   /* Secondary blue                         */
+  --state-nominal:    #00FFA3;   /* GOOD / HEALTHY / NOMINAL               */
+  --state-caution:    #FFB800;   /* WARNING / CAUTION                      */
+  --state-critical:   #FF3B3B;   /* CRITICAL / FAULT / DANGER              */
+  --accent-purple:    #A78BFA;   /* AI / ML labels, confidence scores      */
+  --accent-teal:      #2DD4BF;   /* Secondary accents                      */
 
-  --radius-card: 4px;
+  /* ── Typography ───────────────────────────────────────────────────── */
+  --text-primary:     #E8F4FD;
+  --text-secondary:   #7A9ABB;
+  --text-muted:       #4A6A8A;
+
+  --font-main:  'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:  'JetBrains Mono', monospace;
+
+  --radius-card: 6px;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   background-color: var(--bg-primary);
@@ -47,25 +47,31 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   DRDO DEFENSE CANVASES (Zero Grid Lines, Zero Glowing Halo Effects)
+   DEEP SPACE GRID BACKGROUND — Subtle star-field feel
    ══════════════════════════════════════════════════════════════════════ */
 .tactical-grid-bg {
   background-color: var(--bg-primary);
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(0, 212, 255, 0.035) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(167, 139, 250, 0.025) 0%, transparent 40%);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   GCS CARD — Clean, Solid, Aerospace Instrument Standard
+   GCS CARD — Deep Space Aerospace Instrument
    ══════════════════════════════════════════════════════════════════════ */
 .gcs-card {
   background-color: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-card);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-  transition: border-color 0.15s ease;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.5),
+    0 0 0 0 transparent;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .gcs-card:hover {
   border-color: var(--border-hover);
+  box-shadow: 0 2px 8px rgba(0, 212, 255, 0.06);
 }
 
 .gcs-card-header {
@@ -76,77 +82,145 @@ body {
   border-bottom: 1px solid var(--border-divider);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #cbd5e1;
+  color: #8BADC8;
   font-family: var(--font-main);
+  background: linear-gradient(90deg, rgba(0, 212, 255, 0.03) 0%, transparent 100%);
 }
 
-/* Clean Crisp Text — STRICTLY ZERO NEON TEXT SHADOWS */
-.glow-cyan, .glow-green, .glow-red, .glow-amber {
-  text-shadow: none !important;
-}
-.glow-cyan { color: #38bdf8; }
-.glow-green { color: #10b981; }
-.glow-red { color: #ef4444; }
-.glow-amber { color: #f59e0b; }
+/* ══════════════════════════════════════════════════════════════════════
+   STATUS COLORS — Deep Space Tactical Palette
+   ══════════════════════════════════════════════════════════════════════ */
+.glow-cyan  { color: #00D4FF; }
+.glow-green { color: #00FFA3; }
+.glow-red   { color: #FF3B3B; }
+.glow-amber { color: #FFB800; }
+.glow-purple{ color: #A78BFA; }
 
-/* Tactical Military Action Buttons */
+/* ══════════════════════════════════════════════════════════════════════
+   HEALTH STATUS PILL — Big readable status indicator
+   ══════════════════════════════════════════════════════════════════════ */
+.health-pill-good {
+  background: linear-gradient(135deg, rgba(0, 255, 163, 0.12) 0%, rgba(0, 212, 255, 0.06) 100%);
+  border: 1px solid rgba(0, 255, 163, 0.35);
+  color: #00FFA3;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 700;
+}
+.health-pill-warn {
+  background: linear-gradient(135deg, rgba(255, 184, 0, 0.12) 0%, rgba(255, 120, 0, 0.06) 100%);
+  border: 1px solid rgba(255, 184, 0, 0.35);
+  color: #FFB800;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 700;
+}
+.health-pill-crit {
+  background: linear-gradient(135deg, rgba(255, 59, 59, 0.18) 0%, rgba(200, 0, 0, 0.08) 100%);
+  border: 1px solid rgba(255, 59, 59, 0.45);
+  color: #FF3B3B;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 700;
+  animation: pulse-crit 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse-crit {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 59, 59, 0.25); }
+  50%       { box-shadow: 0 0 0 6px rgba(255, 59, 59, 0); }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   TACTICAL BUTTONS — Deep Space Style
+   ══════════════════════════════════════════════════════════════════════ */
 .tactical-btn {
-  background: #151924;
-  border: 1px solid #22283a;
-  color: #cbd5e1;
-  padding: 5px 10px;
+  background: #0F1927;
+  border: 1px solid #1E3050;
+  color: #8BADC8;
+  padding: 5px 11px;
   font-size: 11px;
   font-weight: 500;
-  border-radius: 3px;
+  border-radius: 5px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 5px;
   transition: all 0.15s ease;
   user-select: none;
+  letter-spacing: 0.03em;
 }
 
 .tactical-btn:hover {
-  background: #1d2334;
-  border-color: #38bdf8;
+  background: #152035;
+  border-color: #00D4FF;
   color: #ffffff;
+  box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.15);
 }
 
 .tactical-btn.active {
-  background: #1d4ed8;
-  color: #ffffff;
-  border-color: #3b82f6;
+  background: linear-gradient(135deg, #0A3060 0%, #0A2050 100%);
+  color: #00D4FF;
+  border-color: rgba(0, 212, 255, 0.6);
   font-weight: 600;
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.12);
 }
 
-.tactical-btn.danger {
-  border-color: #7f1d1d;
-  color: #fca5a5;
+.tactical-btn.danger { border-color: #4A1010; color: #FF8080; }
+.tactical-btn.danger:hover { background: #5A1010; color: #fff; border-color: #FF3B3B; }
+.tactical-btn.danger.active { background: #7A1515; color: #fff; border-color: #FF3B3B; }
+
+/* ══════════════════════════════════════════════════════════════════════
+   PROGRESS / HEALTH BARS — Glowing fills
+   ══════════════════════════════════════════════════════════════════════ */
+.bar-good   { background: linear-gradient(90deg, #00FFA3, #00D4FF); }
+.bar-warn   { background: linear-gradient(90deg, #FFB800, #FF8C00); }
+.bar-crit   { background: linear-gradient(90deg, #FF3B3B, #CC1111); }
+
+/* ══════════════════════════════════════════════════════════════════════
+   LIVE PULSE DOT
+   ══════════════════════════════════════════════════════════════════════ */
+.live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #00FFA3;
+  box-shadow: 0 0 0 0 rgba(0, 255, 163, 0.6);
+  animation: live-pulse 1.8s ease-out infinite;
 }
-.tactical-btn.danger:hover {
-  background: #7f1d1d;
-  color: #fff;
-}
-.tactical-btn.danger.active {
-  background: #b91c1c;
-  color: #fff;
-  border-color: #ef4444;
+@keyframes live-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(0, 255, 163, 0.5); }
+  70%  { box-shadow: 0 0 0 7px rgba(0, 255, 163, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 255, 163, 0); }
 }
 
-/* Minimal Engineering Scrollbars */
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+/* Connecting / disconnected dot */
+.warn-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #FFB800;
+  animation: warn-blink 0.9s step-start infinite;
 }
-::-webkit-scrollbar-track {
-  background: #0a0d14;
+@keyframes warn-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
 }
-::-webkit-scrollbar-thumb {
-  background: #1e2434;
-  border-radius: 2px;
+
+/* ══════════════════════════════════════════════════════════════════════
+   FADE IN ANIMATIONS
+   ══════════════════════════════════════════════════════════════════════ */
+.fade-in {
+  animation: fadeIn 0.3s ease forwards;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #2e374e;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   SCROLLBARS — Deep Space minimal
+   ══════════════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track  { background: #070B14; }
+::-webkit-scrollbar-thumb  { background: #1A2640; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #00D4FF40; }

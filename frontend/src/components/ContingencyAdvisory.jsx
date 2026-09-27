@@ -11,58 +11,64 @@ export default function ContingencyAdvisory({ telemetry }) {
     checklist: ['Standard cruise scan', 'Log engine telemetry at waypoint']
   };
 
-  const getStatusBadge = (lvl) => {
-    if (lvl === 'CRITICAL') return 'bg-red-950/90 border-red-500/70 text-red-400 animate-pulse';
-    if (lvl === 'WARNING') return 'bg-amber-950/80 border-amber-500/50 text-amber-400';
-    return 'bg-emerald-950/70 border-emerald-500/40 text-emerald-400';
-  };
+  const lvl = advisory.severity_level;
+  const statusStyle = lvl === 'CRITICAL'
+    ? { bg: 'rgba(255,59,59,0.12)',  border: 'rgba(255,59,59,0.4)',  color: '#FF3B3B',  pulse: true }
+    : lvl === 'WARNING'
+    ? { bg: 'rgba(255,184,0,0.10)',  border: 'rgba(255,184,0,0.35)', color: '#FFB800',  pulse: false }
+    : { bg: 'rgba(0,255,163,0.07)',  border: 'rgba(0,255,163,0.25)', color: '#00FFA3',  pulse: false };
 
   return (
-    <div className="gcs-card p-3 flex flex-col justify-between">
+    <div className="gcs-card p-3 flex flex-col gap-2.5">
       <div className="gcs-card-header">
         <span className="flex items-center gap-2">
-          <ShieldAlert size={16} className="text-amber-400" />
-          AUTONOMOUS MISSION RELIABILITY & CONTINGENCY ADVISORY
+          <ShieldAlert size={16} style={{ color: '#FFB800' }} />
+          AI Advisory &amp; Recommended Action
         </span>
-        <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border ${getStatusBadge(advisory.severity_level)}`}>
+        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded"
+          style={{ background: statusStyle.bg, border: `1px solid ${statusStyle.border}`, color: statusStyle.color,
+            animation: statusStyle.pulse ? 'pulse-crit 1.4s ease-in-out infinite' : 'none' }}>
           {advisory.status.replace(/_/g, ' ')}
         </span>
       </div>
 
-      {/* Recommendation — single line chip */}
-      <div className="mt-2 flex items-start gap-2 text-[11px] font-mono">
-        <ArrowRightCircle size={13} className="text-cyan-400 shrink-0 mt-0.5" />
-        <span className="text-slate-300 leading-tight">{advisory.recommendation}</span>
+      {/* Recommendation — plain language */}
+      <div className="flex items-start gap-2 text-[11px] font-mono p-2.5 rounded"
+        style={{ background: 'var(--bg-card-inner)', border: '1px solid var(--border-card)' }}>
+        <ArrowRightCircle size={14} style={{ color: '#00D4FF', flexShrink: 0, marginTop: 1 }} />
+        <span style={{ color: '#C8DDF0', lineHeight: '1.5' }}>{advisory.recommendation}</span>
       </div>
 
-      {/* Numerical Metrics: De-rate and Glide Envelope */}
-      <div className="mt-2.5 grid grid-cols-2 gap-2.5 text-xs font-mono">
-        <div className="bg-slate-900/50 p-2 rounded border border-slate-800 flex items-center justify-between">
-          <span className="text-slate-400">Power De-rate:</span>
-          <span className={`font-bold ${advisory.power_derate_pct > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
-            {advisory.power_derate_pct > 0 ? `-${advisory.power_derate_pct}% MAX` : '0% (FULL)'}
+      {/* Metrics */}
+      <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+        <div className="p-2 rounded flex items-center justify-between"
+          style={{ background: 'var(--bg-card-inner)', border: '1px solid var(--border-card)' }}>
+          <span style={{ color: 'var(--text-secondary)' }}>Power De-rate:</span>
+          <span className="font-bold" style={{ color: advisory.power_derate_pct > 0 ? '#FFB800' : '#00FFA3' }}>
+            {advisory.power_derate_pct > 0 ? `-${advisory.power_derate_pct}%` : 'FULL POWER'}
           </span>
         </div>
-
-        <div className="bg-slate-900/50 p-2 rounded border border-slate-800 flex items-center justify-between">
-          <span className="text-slate-400 flex items-center gap-1">
-            <Compass size={13} className="text-cyan-400" /> Max Glide:
+        <div className="p-2 rounded flex items-center justify-between"
+          style={{ background: 'var(--bg-card-inner)', border: '1px solid var(--border-card)' }}>
+          <span className="flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
+            <Compass size={12} style={{ color: '#00D4FF' }} /> Glide Range:
           </span>
-          <span className="text-cyan-300 font-bold">{advisory.glide_range_nm} NM</span>
+          <span className="font-bold" style={{ color: '#00D4FF' }}>{advisory.glide_range_nm} NM</span>
         </div>
       </div>
 
       {/* Action Checklist */}
-      <div className="mt-2.5 pt-2 border-t border-slate-800">
-        <div className="text-[11px] font-mono text-slate-400 mb-1 flex items-center gap-1 font-semibold text-slate-200">
-          <CheckSquare size={12} className="text-cyan-400" />
-          PILOT / AUTOPILOT CONTINGENCY CHECKLIST:
+      <div className="pt-1" style={{ borderTop: '1px solid var(--border-divider)' }}>
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold mb-1.5" style={{ color: '#8BADC8' }}>
+          <CheckSquare size={12} style={{ color: '#00D4FF' }} />
+          PILOT CHECKLIST:
         </div>
-        <ul className="space-y-1 text-[11px] font-mono text-slate-300">
+        <ul className="space-y-1">
           {advisory.checklist.map((item, idx) => (
-            <li key={idx} className="flex items-start gap-1.5 bg-slate-950/40 px-2 py-1 rounded border border-slate-800/60">
-              <span className="text-cyan-400 font-bold">{idx + 1}.</span>
-              <span>{item}</span>
+            <li key={idx} className="flex items-start gap-1.5 px-2 py-1 rounded text-[11px] font-mono"
+              style={{ background: 'var(--bg-card-inner)', border: '1px solid var(--border-subtle)' }}>
+              <span className="font-bold" style={{ color: '#00D4FF' }}>{idx + 1}.</span>
+              <span style={{ color: '#B0C8E0' }}>{item}</span>
             </li>
           ))}
         </ul>

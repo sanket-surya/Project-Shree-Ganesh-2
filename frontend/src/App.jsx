@@ -21,13 +21,13 @@ import MaintenanceScheduler from './components/MaintenanceScheduler';
 import CascadeTimelinePanel from './components/CascadeTimelinePanel';
 
 const TABS = [
-  { id: 'twin',        label: 'DIGITAL TWIN',        icon: <Layers size={14} /> },
-  { id: 'trends',      label: 'DEGRADATION TRENDS',   icon: <Activity size={14} /> },
-  { id: 'preflight',   label: 'PRE-FLIGHT GO/NO-GO',  icon: <ShieldCheck size={14} /> },
-  { id: 'fleet',       label: 'FLEET HEALTH',         icon: <Plane size={14} className="text-cyan-400" /> },
-  { id: 'replay',      label: 'MISSION REPLAY',       icon: <Film size={14} /> },
-  { id: 'maintenance', label: 'MAINTENANCE',           icon: <Wrench size={14} /> },
-  { id: 'cascade',     label: 'CASCADE FAILURE DEMO', icon: <Rocket size={14} className="text-orange-400" /> },
+  { id: 'twin',        label: 'LIVE ENGINE',           icon: <Layers size={14} />,      desc: 'Real-time 3D engine digital twin & telemetry' },
+  { id: 'trends',      label: 'WEAR ANALYSIS',         icon: <Activity size={14} />,    desc: 'AI-predicted degradation & aging trends' },
+  { id: 'preflight',   label: 'FLIGHT READINESS',      icon: <ShieldCheck size={14} />, desc: 'Go / No-Go pre-flight safety check' },
+  { id: 'fleet',       label: 'FLEET STATUS',          icon: <Plane size={14} />,       desc: 'Multi-UAV fleet health overview' },
+  { id: 'replay',      label: 'BLACK BOX REPLAY',      icon: <Film size={14} />,        desc: 'Replay past mission data frame-by-frame' },
+  { id: 'maintenance', label: 'MAINTENANCE LOG',        icon: <Wrench size={14} />,      desc: 'Scheduled maintenance & overhaul tracking' },
+  { id: 'cascade',     label: 'FAILURE SIMULATION',    icon: <Rocket size={14} />,      desc: 'Cascading fault injection demo for analysis' },
 ];
 
 const FALLBACK_TELEM = {
@@ -155,84 +155,139 @@ export default function App() {
   const faultActive = state.active_fault && state.active_fault !== 'NONE';
   const isCritical  = ai.is_anomaly && ai.anomaly_score > 0.7;
 
-  return (
-    <div className="min-h-screen bg-[#0c0f17] text-slate-100 tactical-grid-bg flex flex-col font-sans selection:bg-sky-500 selection:text-black">
+  // Health status helper
+  const healthIndex = ai.health_index !== undefined ? ai.health_index : 0.98;
+  const healthPct = Math.round(healthIndex * 100);
+  const healthLabel = healthPct >= 85 ? 'ALL SYSTEMS NOMINAL' : healthPct >= 60 ? 'CAUTION — DEGRADED' : 'CRITICAL — FAULT ACTIVE';
+  const healthPillClass = healthPct >= 85 ? 'health-pill-good' : healthPct >= 60 ? 'health-pill-warn' : 'health-pill-crit';
 
-      {/* ── MATURE DEFENSE GCS HEADER ───────────────────────────────────────── */}
-      <header className="border-b border-[#1e2436] bg-[#121622] px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-40">
+  return (
+    <div className="min-h-screen tactical-grid-bg flex flex-col font-sans" style={{ color: 'var(--text-primary)', background: 'var(--bg-primary)' }}>
+
+      {/* ── HEADER ──────────────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-40 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3"
+        style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-card)' }}>
+
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded bg-[#182030] border border-[#2b354e] flex items-center justify-center text-sky-400">
-            <Plane size={18} className="transform -rotate-45" />
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #0A2040, #0D3060)', border: '1px solid rgba(0,212,255,0.3)' }}>
+            <Plane size={18} style={{ color: '#00D4FF' }} className="transform -rotate-45" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-bold tracking-wider text-white font-['Inter',sans-serif]">
-                MALE UAV PROPULSION DIGITAL TWIN
+              <h1 className="text-sm font-bold tracking-wider" style={{ color: '#E8F4FD' }}>
+                AeroTwin — UAV Engine Digital Twin
               </h1>
-              <span className="text-[10px] font-mono bg-[#182133] border border-[#2b3954] text-sky-300 px-1.5 py-0.2 rounded">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded font-semibold"
+                style={{ background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.3)', color: '#00D4FF' }}>
                 SIH 2026
               </span>
-              <span className="text-[10px] font-mono bg-[#142328] border border-[#1e3c3b] text-teal-300 px-1.5 py-0.2 rounded hidden sm:inline">
-                DO-178C DAL-B
-              </span>
             </div>
-            <div className="text-[11px] font-mono text-slate-400 flex items-center gap-2 mt-0.5">
-              <span>PLATFORM: <span className="text-slate-200 font-semibold">{state.engine_name || 'ROTAX 914F'} ({state.engine_power_hp || 115} HP)</span> | AIRFRAME: <span className="text-sky-300 font-semibold">TAPAS-BH-201 / HERON</span></span>
+            <div className="text-[11px] font-mono mt-0.5 flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+              <span>Engine: <span style={{ color: '#E8F4FD', fontWeight: 600 }}>{state.engine_name || 'ROTAX 914F'}</span></span>
+              <span style={{ color: 'var(--border-hover)' }}>|</span>
+              <span>Airframe: <span style={{ color: '#00D4FF', fontWeight: 600 }}>TAPAS-BH-201</span></span>
               {selectedComponent && (
-                <span className="text-[10px] bg-[#1b253b] border border-sky-500/60 text-sky-300 px-1.5 py-0.2 rounded">
-                  INSPECTING: {selectedComponent}
+                <span className="text-[10px] px-1.5 py-0.5 rounded"
+                  style={{ background: 'rgba(0,212,255,0.1)', border: '1px solid rgba(0,212,255,0.4)', color: '#00D4FF' }}>
+                  🔍 {selectedComponent}
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Center: Flight Envelope Strip */}
-        <div className="hidden lg:flex items-center gap-3.5 text-xs font-mono bg-[#0e121c] px-3.5 py-1.5 rounded border border-[#1e2436]">
-          <div><span className="text-slate-400">PROFILE:</span> <strong className="text-sky-300">{flight.mission_name || 'Nominal ISR'}</strong></div>
-          <div className="h-3 w-px bg-slate-700" />
-          <div><span className="text-slate-400">ALT:</span> <strong className="text-white">{flight.altitude_m ? `${flight.altitude_m.toFixed(0)}m` : '1500m'}</strong></div>
-          <div className="h-3 w-px bg-slate-700" />
-          <div><span className="text-slate-400">TAS:</span> <strong className="text-white">{flight.airspeed_kts || 95} kts</strong></div>
-          <div className="h-3 w-px bg-slate-700" />
-          <div><span className="text-slate-400">AMB:</span> <strong className="text-white">{flight.ambient_temp_c?.toFixed(1) ?? 15}°C</strong></div>
-          <div className="h-3 w-px bg-slate-700" />
-          <div><span className="text-slate-400">THR:</span> <strong className="text-amber-400">{flight.throttle_pct || 75}%</strong></div>
-          <div className="h-3 w-px bg-slate-700" />
-          <div><span className="text-slate-400">EFF:</span> <strong className="text-emerald-400">{state.combustion_efficiency_pct?.toFixed(1) ?? '92.5'}%</strong></div>
+        {/* Center: Live Flight Strip */}
+        <div className="hidden lg:flex items-center gap-3 text-xs font-mono px-3.5 py-1.5 rounded-lg"
+          style={{ background: 'var(--bg-card-inner)', border: '1px solid var(--border-card)' }}>
+          <div><span style={{ color: 'var(--text-secondary)' }}>Mission:</span> <strong style={{ color: '#00D4FF' }}>{flight.mission_name || 'ISR Loiter'}</strong></div>
+          <div style={{ width: 1, height: 12, background: 'var(--border-card)' }} />
+          <div><span style={{ color: 'var(--text-secondary)' }}>Alt:</span> <strong style={{ color: '#E8F4FD' }}>{flight.altitude_m ? `${Math.round(flight.altitude_m)} m` : '1500 m'}</strong></div>
+          <div style={{ width: 1, height: 12, background: 'var(--border-card)' }} />
+          <div><span style={{ color: 'var(--text-secondary)' }}>Speed:</span> <strong style={{ color: '#E8F4FD' }}>{flight.airspeed_kts || 95} kts</strong></div>
+          <div style={{ width: 1, height: 12, background: 'var(--border-card)' }} />
+          <div><span style={{ color: 'var(--text-secondary)' }}>Throttle:</span> <strong style={{ color: '#FFB800' }}>{flight.throttle_pct || 75}%</strong></div>
+          <div style={{ width: 1, height: 12, background: 'var(--border-card)' }} />
+          <div><span style={{ color: 'var(--text-secondary)' }}>Efficiency:</span> <strong style={{ color: '#00FFA3' }}>{state.combustion_efficiency_pct?.toFixed(1) ?? '92.5'}%</strong></div>
         </div>
 
-        {/* Right: Status + Actions */}
+        {/* Right: Status */}
         <div className="flex items-center gap-3">
           {faultActive && (
-            <span className={`text-[10.5px] font-mono font-bold px-2 py-0.5 rounded border ${isCritical ? 'bg-red-950/80 border-red-500 text-red-300' : 'bg-amber-950/80 border-amber-500/60 text-amber-300'}`}>
-              ⚠ {state.active_fault?.replaceAll('_', ' ')}
+            <span className="text-[10.5px] font-mono font-bold px-2 py-1 rounded-md"
+              style={isCritical
+                ? { background: 'rgba(255,59,59,0.15)', border: '1px solid rgba(255,59,59,0.5)', color: '#FF3B3B' }
+                : { background: 'rgba(255,184,0,0.12)', border: '1px solid rgba(255,184,0,0.4)', color: '#FFB800' }}>
+              ⚠ FAULT: {state.active_fault?.replaceAll('_', ' ')}
             </span>
           )}
-          <div className="flex items-center gap-1.5 text-xs font-mono">
-            <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-400' : 'bg-amber-400 animate-ping'}`} />
-            <span className={wsConnected ? 'text-emerald-400' : 'text-amber-400'}>
-              {wsConnected ? 'FADEC CAN-BUS: LIVE' : 'CONNECTING...'}
+          <div className="flex items-center gap-2">
+            {wsConnected ? <span className="live-dot" /> : <span className="warn-dot" />}
+            <span className="text-xs font-mono" style={{ color: wsConnected ? '#00FFA3' : '#FFB800' }}>
+              {wsConnected ? 'LIVE TELEMETRY' : 'CONNECTING...'}
             </span>
           </div>
-          <button onClick={() => setIsReportOpen(true)} className="tactical-btn active text-xs font-mono">
-            AIRWORTHINESS REPORT
+          <button onClick={() => setIsReportOpen(true)} className="tactical-btn active text-xs">
+            📋 AIRWORTHINESS REPORT
           </button>
         </div>
       </header>
 
-      {/* ── CALM DEFENSE TAB NAV ────────────────────────────────────────────── */}
-      <nav className="bg-[#0f131d] border-b border-[#1c2232] px-4 flex items-center gap-1 overflow-x-auto">
+      {/* ── HEALTH STATUS BANNER (Phase 1) ──────────────────────────────────── */}
+      <div className="px-4 py-2 flex flex-wrap items-center gap-3"
+        style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border-subtle)' }}>
+        {/* Big Health Pill */}
+        <div className={`${healthPillClass} flex items-center gap-2 text-sm font-bold`}>
+          <span>{healthPct >= 85 ? '✅' : healthPct >= 60 ? '⚠️' : '🚨'}</span>
+          <span>ENGINE HEALTH: {healthPct}% — {healthLabel}</span>
+        </div>
+
+        {/* Quick stat chips */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 text-xs font-mono px-2.5 py-1.5 rounded"
+            style={{ background: 'var(--bg-card-inner)', border: '1px solid var(--border-card)' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Remaining Life (RUL):</span>
+            <strong style={{ color: ai.predicted_rul_hours < 200 ? '#FF3B3B' : '#00FFA3' }}>
+              {(ai.predicted_rul_hours ?? 875).toFixed(0)} hrs
+            </strong>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs font-mono px-2.5 py-1.5 rounded"
+            style={{ background: 'var(--bg-card-inner)', border: '1px solid var(--border-card)' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Fault Detected:</span>
+            <strong style={{ color: ai.primary_fault === 'Nominal' ? '#00FFA3' : '#FF3B3B' }}>
+              {ai.primary_fault === 'Nominal' ? 'NONE' : (ai.primary_fault || 'NONE').replaceAll('_', ' ')}
+            </strong>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs font-mono px-2.5 py-1.5 rounded"
+            style={{ background: 'var(--bg-card-inner)', border: '1px solid var(--border-card)' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>AI Confidence:</span>
+            <strong style={{ color: '#A78BFA' }}>{((ai.fault_confidence ?? 0.96) * 100).toFixed(0)}%</strong>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs font-mono px-2.5 py-1.5 rounded"
+            style={{ background: 'var(--bg-card-inner)', border: '1px solid var(--border-card)' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Flight Hours:</span>
+            <strong style={{ color: '#00D4FF' }}>{state.accumulated_hours ?? 124.5} hrs</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* ── TAB NAVIGATION ──────────────────────────────────────────────────── */}
+      <nav className="px-4 flex items-center gap-0.5 overflow-x-auto"
+        style={{ background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-card)' }}>
         {TABS.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-3.5 py-2 text-xs font-semibold tracking-wide border-b-2 transition-all whitespace-nowrap ${
-              activeTab === tab.id
-                ? 'border-sky-400 text-sky-300 bg-[#161c2b]/80'
-                : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-[#131724]'
+            title={tab.desc}
+            className={`flex items-center gap-2 px-3.5 py-2.5 text-xs font-semibold tracking-wide border-b-2 transition-all whitespace-nowrap ${
+              activeTab === tab.id ? 'border-b-2' : 'border-transparent'
             }`}
+            style={activeTab === tab.id
+              ? { borderBottomColor: '#00D4FF', color: '#00D4FF', background: 'rgba(0,212,255,0.06)' }
+              : { borderBottomColor: 'transparent', color: 'var(--text-secondary)' }}
+            onMouseEnter={e => { if (activeTab !== tab.id) { e.currentTarget.style.color = '#E8F4FD'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}}
+            onMouseLeave={e => { if (activeTab !== tab.id) { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'transparent'; }}}
           >
             {tab.icon}
             {tab.label}
@@ -362,7 +417,7 @@ export default function App() {
       </main>
 
       {/* ── FOOTER REPLAY BAR ──────────────────────────────────────────────── */}
-      <footer className="sticky bottom-0 z-30 p-2 bg-slate-950/95 border-t border-slate-800">
+      <footer className="sticky bottom-0 z-30 p-2" style={{ background: 'rgba(7,11,20,0.97)', borderTop: '1px solid var(--border-card)' }}>
         <MissionReplayBar
           isReplaying={isReplaying}
           onToggleReplay={() => {
