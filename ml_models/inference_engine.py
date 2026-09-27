@@ -71,6 +71,15 @@ class AeroEngineInferenceEngine:
                 print("[INFERENCE] AI/ML Models loaded successfully (High-Speed Inference Engine Ready).")
             else:
                 print("[INFERENCE] Model weights not found, waiting for training...")
+
+            # Check for MoE weights
+            moe_router_path = os.path.join(os.path.dirname(__file__), "weights", "moe", "router.joblib")
+            if os.path.exists(moe_router_path):
+                try:
+                    self.moe_router = joblib.load(moe_router_path)
+                    print("[INFERENCE] MoE Gating Router loaded successfully.")
+                except Exception as e:
+                    self.moe_router = None
         except Exception as e:
             print(f"[INFERENCE ERROR] Could not load models: {e}")
 
@@ -170,7 +179,10 @@ class AeroEngineInferenceEngine:
 
     def predict(self, state: dict, flight: dict) -> dict:
         if not self.is_loaded:
-            self.load_models()
+            # Guard: only attempt reload once per session, not every 20Hz tick
+            if not getattr(self, '_load_attempted', False):
+                self._load_attempted = True
+                self.load_models()
             if not self.is_loaded:
                 return self._fallback_prediction(state)
 
@@ -228,6 +240,24 @@ class AeroEngineInferenceEngine:
         # 5. Autonomous Contingency Advisory Recommendation
         contingency = self._generate_contingency_advisory(top_fault, top_confidence, anomaly_score, state, flight)
 
+        # 6. MoE Gating Router Active Experts (if MoE router trained)
+        active_experts = []
+        if getattr(self, "moe_router", None) is not None:
+            try:
+                from ml_models.moe_architecture import AEROTWIN_27_PARAMS, EXPERT_IDS
+                x_vec = np.zeros((1, len(AEROTWIN_27_PARAMS)), dtype=np.float32)
+                row_dict = X.iloc[0].to_dict()
+                for i, p in enumerate(AEROTWIN_27_PARAMS):
+                    x_vec[0, i] = float(row_dict.get(p, 0.0))
+                g_weights = self.moe_router.predict_gating_weights(x_vec)[0]
+                top_e = np.argsort(-g_weights)
+                active_experts = [
+                    {"expert": EXPERT_IDS[idx], "weight": float(round(g_weights[idx], 3))}
+                    for idx in top_e if g_weights[idx] > 0.05
+                ]
+            except Exception:
+                active_experts = []
+
         return {
             "is_anomaly": is_anomaly,
             "anomaly_score": round(anomaly_score, 3),
@@ -235,19 +265,23 @@ class AeroEngineInferenceEngine:
             "fault_confidence": round(float(top_confidence), 3),
             "fault_probabilities": fault_distribution,
             "predicted_rul_hours": round(predicted_rul, 1),
-            "health_index": round(max(0.05, 1.0 - (anomaly_score * 0.9)), 2),
+            "health_index": round(health_index, 2),  # Uses fault-aware health_index (Bug2 fixed)
             "xai_attributions": xai_contributions,
-            "contingency_advisory": contingency
+            "contingency_advisory": contingency,
+            "active_experts": active_experts
         }
 
     def _compute_xai(self, feature_row: np.ndarray, primary_fault: str) -> list:
         # High impact feature attribution for current prediction
+        # 32 values matching DEFAULT_FEATURE_NAMES exactly
         nominal_baselines = [
-            5000, 1150, 65, 120, 18, 3.0,
-            110, 110, 112, 111,
-            810, 815, 808, 812,
-            90, 3.8, 86, 110000, 1.4, 28.1,
-            1500, 15, 75, 4.0, 10.0, 0.0, 0.0
+            5000, 1150, 65, 120, 18, 3.0,    # rpm, map, power, torque, fuel_flow, fuel_pres
+            110, 110, 112, 111,                # cht_cyl_1-4
+            810, 815, 808, 812,                # egt_cyl_1-4
+            90, 3.8, 86, 110000, 1.4, 28.1,  # oil_temp, oil_pres, coolant, turbo_rpm, vib, voltage
+            1500, 15, 75,                      # altitude, ambient_temp, throttle
+            26.0, 8.5, 3.8, 1.02, 92.5,      # ign_timing, inj_timing, inj_pw, lambda, comb_eff
+            2.5, 5.0, 0.0, 0.0               # res_cht_spread, res_egt_spread, res_map, res_oil
         ]
         
         diffs = []

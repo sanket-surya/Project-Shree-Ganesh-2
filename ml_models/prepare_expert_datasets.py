@@ -134,7 +134,7 @@ def main():
             age_h = (time.time() - os.path.getmtime(out_path)) / 3600
             sz_mb = os.path.getsize(out_path) / 1024**2
             rows = pd.read_parquet(out_path).shape[0]
-            if age_h < 0 and rows > 1000:  # Cache disabled — always refresh
+            if age_h < 24 and rows > 1000:  # Cache valid for 24h (re-enabled after real data loaded)
                 print(f"\n[{expert_id}] Already prepared ({rows:,} rows, {sz_mb:.1f} MB, {age_h:.1f}h ago) — SKIP")
                 stats.append({
                     "expert": expert_id, "description": description,

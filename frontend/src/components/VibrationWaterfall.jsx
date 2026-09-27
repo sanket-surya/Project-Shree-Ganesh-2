@@ -30,9 +30,26 @@ export default function VibrationWaterfall({ telemetry }) {
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
+    // ── Retina/4K fix: scale canvas to devicePixelRatio ──────────────────
+    const setupCanvas = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement?.getBoundingClientRect();
+      const cssW = rect ? rect.width : 400;
+      const cssH = 130;
+      canvas.width  = Math.round(cssW * dpr);
+      canvas.height = Math.round(cssH * dpr);
+      canvas.style.width  = `${cssW}px`;
+      canvas.style.height = `${cssH}px`;
+      ctx.scale(dpr, dpr);
+      return { W: cssW, H: cssH };
+    };
+
+    let { W, H } = setupCanvas();
+
     const draw = () => {
-      const W = canvas.width;
-      const H = canvas.height;
+      // Recalc in case resize
+      W = canvas.width  / (window.devicePixelRatio || 1);
+      H = canvas.height / (window.devicePixelRatio || 1);
       const PAD = { top: 14, right: 10, bottom: 18, left: 36 };
       const cW = W - PAD.left - PAD.right;
       const cH = H - PAD.top  - PAD.bottom;
@@ -212,10 +229,8 @@ export default function VibrationWaterfall({ telemetry }) {
       >
         <canvas
           ref={canvasRef}
-          width={400}
-          height={130}
           className="w-full block"
-          style={{ height: '130px' }}
+          style={{ height: '130px', display: 'block' }}
         />
         {/* CRT corner labels */}
         <div className="absolute top-1 left-10 text-[8px] font-mono" style={{ color: st.color + 'aa' }}>

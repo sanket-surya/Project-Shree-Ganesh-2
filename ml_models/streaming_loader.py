@@ -235,8 +235,9 @@ class AeroTwinStreamingLoader:
         self.defaults    = NOMINAL_DEFAULTS
         self.load_these  = datasets_to_load or list(self.registry.keys())
 
-    def _find_data_files(self, folder: str, limit: int = 20) -> List[str]:
-        """Recursively find all supported data files in a folder."""
+    def _find_data_files(self, folder: str, limit: int = 35) -> List[str]:
+        """Recursively find all supported data files in a folder, balanced across classes."""
+        import collections
         files = []
         if not os.path.exists(folder):
             return files
@@ -244,14 +245,33 @@ class AeroTwinStreamingLoader:
             for f in fnames:
                 if f.endswith(('.csv', '.parquet', '.txt', '.dat', '.mat', '.h5', '.hdf5')):
                     files.append(os.path.join(root, f))
+        if len(files) <= limit:
+            return sorted(files)
+        
+        # Balance files across inferred fault classes if .mat or multiple classes exist
+        by_class = collections.defaultdict(list)
+        for f in files:
+            lbl = self._fault_label_from_filename(f)
+            by_class[lbl].append(f)
+        
+        if len(by_class) > 1:
+            balanced = []
+            per_class = max(1, limit // len(by_class))
+            for lbl, flist in sorted(by_class.items()):
+                balanced.extend(flist[:per_class])
+            if len(balanced) < limit:
+                remaining = [f for f in sorted(files) if f not in balanced]
+                balanced.extend(remaining[:limit - len(balanced)])
+            return balanced[:limit]
+
         return sorted(files)[:limit]
 
     # Keep old name for backward compatibility
     def _find_csv_files(self, folder: str) -> List[str]:
         return self._find_data_files(folder)
 
-    def _read_mat_file(self, fpath: str, chunk_size: int = 30000) -> List[pd.DataFrame]:
-        """Read a .mat file and return list of DataFrames (chunked)."""
+    def _read_mat_file(self, fpath: str, chunk_size: int = 15000, max_rows_per_file: int = 15000) -> List[pd.DataFrame]:
+        """Read a .mat file and return list of DataFrames (chunked and capped for diversity)."""
         try:
             import scipy.io as sio
         except ImportError:
@@ -274,6 +294,9 @@ class AeroTwinStreamingLoader:
                 data = data.reshape(data.shape[0], -1)
             df = pd.DataFrame(data.astype(np.float32))
             df.columns = [f"ch{i}" for i in range(df.shape[1])]
+            # Cap rows per file for diversity across files
+            if len(df) > max_rows_per_file:
+                df = df.iloc[:max_rows_per_file]
             # Chunk it
             for start in range(0, len(df), chunk_size):
                 chunks.append(df.iloc[start:start+chunk_size].copy())
@@ -312,19 +335,48 @@ class AeroTwinStreamingLoader:
 
     def _fault_label_from_filename(self, fpath: str) -> str:
         """Infer fault type from filename (CWRU/MFPT/Paderborn convention)."""
-        fname = os.path.basename(fpath).lower()
-        if any(x in fname for x in ['normal', 'health', 'baseline', 'good', 'no_', 'k001']):
+        fname = os.path.basename(fpath).lower().replace('.mat', '').replace('.csv', '')
+
+        # ── Descriptive name keywords ──────────────────────────────────────
+        if any(x in fname for x in ['normal', 'health', 'baseline', 'good', 'no_', 'k001', 'b000', 'n00']):
             return 'Nominal'
-        if any(x in fname for x in ['inner', 'ir', 'irp']):
+        if any(x in fname for x in ['inner', 'ir', 'irp', 'ir007', 'ir014', 'ir021']):
             return 'Cylinder_Misfire'
-        if any(x in fname for x in ['outer', 'or', 'orp']):
+        if any(x in fname for x in ['outer', 'or', 'orp', 'or007', 'or014', 'or021', '3o', '6o', '12o']):
             return 'Turbo_Degradation'
-        if any(x in fname for x in ['ball', 'roller', 'br', 'b']):
+        if any(x in fname for x in ['ball', 'roller', 'br', 'b007', 'b014', 'b021']):
             return 'Combustion_Knock'
         if any(x in fname for x in ['cage', 'retain']):
             return 'Valve_Leakage'
-        if any(x in fname for x in ['crack', 'spall', 'wear']):
+        if any(x in fname for x in ['crack', 'spall', 'wear', 'combo']):
             return 'Oil_Starvation'
+
+        # ── CWRU numeric filename convention ───────────────────────────────
+        # CWRU: files named as fault diameter in thou (e.g. 97=normal, 105=inner, 118=inner, 130=inner,
+        #       169=ball, 185=ball, 197=ball, 209=outer, 222=outer, 234=outer, 246=outer)
+        try:
+            num = int(''.join(filter(str.isdigit, fname)))
+            if num == 0 or (97 <= num <= 100):
+                return 'Nominal'
+            elif 105 <= num <= 162:
+                return 'Cylinder_Misfire'   # Inner race fault
+            elif 169 <= num <= 202:
+                return 'Combustion_Knock'   # Ball fault
+            elif 209 <= num <= 250:
+                return 'Turbo_Degradation'  # Outer race fault
+            elif 270 <= num <= 310:
+                return 'Valve_Leakage'      # Combo fault
+        except (ValueError, TypeError):
+            pass
+
+        # ── Paderborn convention: K=healthy, KA/KI/KO=fault ──────────────
+        if fname.startswith('k0'):
+            return 'Nominal'
+        if 'ka' in fname or 'ki' in fname:
+            return 'Cylinder_Misfire'
+        if 'ko' in fname:
+            return 'Turbo_Degradation'
+
         return 'Nominal'
 
     def _compute_rms(self, df: pd.DataFrame) -> pd.Series:
@@ -332,7 +384,9 @@ class AeroTwinStreamingLoader:
         numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
         if not numeric_cols:
             return pd.Series(np.ones(len(df)) * 1.4)
-        rms = np.sqrt((df[numeric_cols] ** 2).mean(axis=1))
+        # Bug7 fix: fill NaN before RMS to prevent NaN propagation
+        df_clean = df[numeric_cols].fillna(0.0)
+        rms = np.sqrt((df_clean ** 2).mean(axis=1))
         # Normalize to g-range (0.5 - 5.0 g)
         rms_min, rms_max = rms.min(), rms.max()
         if rms_max > rms_min:

@@ -129,14 +129,21 @@ for chunk in loader.stream_all_for_expert("E1_performance"):
     # process chunk...
 ```
 
-## MoE Architecture (Future — Planned)
+## MoE Architecture (7 Experts + Gating Router)
 ```
-Files to create:
+Created files:
 - ml_models/moe_architecture.py  ← Router + 7 Experts definition
-- ml_models/train_moe.py         ← MoE training on real 110 GB data
-- ml_models/moe_inference.py     ← MoE real-time inference
-- inference_engine.py update     ← Switch to MoE
+- ml_models/train_moe.py         ← MoE training on real 110 GB data (2.1M rows)
+- ml_models/moe_inference.py     ← MoE real-time inference (<5ms latency)
 ```
+
+### MoE Training Command:
+```bash
+python -X utf8 ml_models/train_moe.py
+```
+- Trains Gating Router (Softmax dynamic attention)
+- Trains 7 GPU-accelerated domain experts (E1 to E7)
+- Saves weights to `ml_models/weights/moe/`
 
 ## Current Model Performance (after training)
 - Check `ml_models/weights/model_metadata.json` for latest metrics

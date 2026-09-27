@@ -1,29 +1,138 @@
-import React from 'react';
-import { Clock, HeartPulse, Wrench } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+import { Clock, HeartPulse, Wrench, TrendingDown } from 'lucide-react';
+
+const RUL_HISTORY = 60; // last 60 ticks = ~3 seconds at 20Hz
 
 export default function RULDegradationGauge({ telemetry }) {
   const ai = telemetry?.ai || {};
-  const rulHours   = ai.predicted_rul_hours !== undefined ? ai.predicted_rul_hours : 875.0;
-  const healthIndex = ai.health_index !== undefined ? ai.health_index : 0.98;
+  const rulHours    = ai.predicted_rul_hours !== undefined ? ai.predicted_rul_hours : 875.0;
+  const healthIndex = ai.health_index        !== undefined ? ai.health_index        : 0.98;
   const primaryFault = ai.primary_fault || 'Nominal';
 
+  // ── RUL Trend History ────────────────────────────────────────────────────
+  const rulHistoryRef  = useRef([]);
+  const canvasRef      = useRef(null);
+  const animRef        = useRef(null);
+
+  useEffect(() => {
+    rulHistoryRef.current.push(rulHours);
+    if (rulHistoryRef.current.length > RUL_HISTORY) rulHistoryRef.current.shift();
+  }, [rulHours]);
+
+  // Draw RUL trend sparkline
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    const drawTrend = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const cssW = canvas.parentElement?.getBoundingClientRect().width || 300;
+      const cssH = 48;
+      if (canvas.width !== Math.round(cssW * dpr)) {
+        canvas.width  = Math.round(cssW * dpr);
+        canvas.height = Math.round(cssH * dpr);
+        canvas.style.width  = `${cssW}px`;
+        canvas.style.height = `${cssH}px`;
+        ctx.scale(dpr, dpr);
+      }
+      const W = cssW, H = cssH;
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = 'rgba(0,8,18,0.8)';
+      ctx.fillRect(0, 0, W, H);
+
+      const data = rulHistoryRef.current;
+      if (data.length < 2) { animRef.current = requestAnimationFrame(drawTrend); return; }
+
+      const minV = Math.max(0, Math.min(...data) - 5);
+      const maxV = Math.max(...data) + 5;
+      const range = maxV - minV || 1;
+
+      const toX = (i)  => (i / (RUL_HISTORY - 1)) * W;
+      const toY = (v)  => H - 6 - ((v - minV) / range) * (H - 12);
+
+      // Trend direction color
+      const isDecreasing = data.length > 5 && data[data.length - 1] < data[data.length - 5];
+      const trendColor = rulHours < 200 ? '#FF3B3B' : isDecreasing ? '#FFB800' : '#00FFA3';
+
+      // Fill gradient under line
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, trendColor + '40');
+      grad.addColorStop(1, trendColor + '00');
+
+      ctx.beginPath();
+      data.forEach((v, i) => {
+        const x = toX(i), y = toY(v);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.lineTo(toX(data.length - 1), H);
+      ctx.lineTo(toX(0), H);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Line
+      ctx.beginPath();
+      data.forEach((v, i) => {
+        const x = toX(i), y = toY(v);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = trendColor;
+      ctx.lineWidth = 1.5;
+      ctx.lineJoin  = 'round';
+      ctx.stroke();
+
+      // Live dot
+      const lx = toX(data.length - 1), ly = toY(data[data.length - 1]);
+      ctx.beginPath();
+      ctx.arc(lx, ly, 3, 0, Math.PI * 2);
+      ctx.fillStyle = trendColor;
+      ctx.fill();
+
+      // Min/Max labels
+      ctx.font = '8px monospace';
+      ctx.fillStyle = 'rgba(168,189,208,0.6)';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${maxV.toFixed(0)}h`, W - 2, 10);
+      ctx.fillText(`${minV.toFixed(0)}h`, W - 2, H - 2);
+
+      animRef.current = requestAnimationFrame(drawTrend);
+    };
+
+    animRef.current = requestAnimationFrame(drawTrend);
+    return () => cancelAnimationFrame(animRef.current);
+  }, [rulHours]);
+
+  // ── Subsystem Health ─────────────────────────────────────────────────────
   const getSubsystemHealth = () => {
     let pistons = 98, turbo = 96, lube = 99, cooling = 97, valves = 98;
-    if (primaryFault === 'Cylinder_Misfire')  pistons = 35;
+    if (primaryFault === 'Cylinder_Misfire')   pistons = 35;
     else if (primaryFault === 'Turbo_Degradation') turbo = 42;
     else if (primaryFault === 'Oil_Starvation')    { lube = 12; pistons = 45; }
     else if (primaryFault === 'Coolant_Loss')       { cooling = 18; pistons = 50; }
     else if (primaryFault === 'Combustion_Knock')   { pistons = 40; valves = 55; }
     else if (primaryFault === 'Valve_Leakage')      valves = 38;
+    else if (primaryFault === 'Sensor_Drift')       {} // no mechanical change
+    else if (primaryFault === 'Injector_Clogging')  { pistons = 70; }
     return { pistons, turbo, lube, cooling, valves };
   };
 
-  const subs = getSubsystemHealth();
+  const subs      = getSubsystemHealth();
   const healthPct = Math.round(healthIndex * 100);
   const rulPct    = Math.min(100, (rulHours / 1200) * 100);
 
-  const getBarClass = (val) => val > 80 ? 'bar-good' : val > 50 ? 'bar-warn' : 'bar-crit';
-  const getTextColor = (val) => val > 80 ? '#00FFA3' : val > 50 ? '#FFB800' : '#FF3B3B';
+  const getBarClass   = (v) => v > 80 ? 'bar-good' : v > 50 ? 'bar-warn' : 'bar-crit';
+  const getTextColor  = (v) => v > 80 ? '#00FFA3' : v > 50 ? '#FFB800' : '#FF3B3B';
+
+  // Trend indicator
+  const hist = rulHistoryRef.current;
+  const trendSymbol = hist.length > 5
+    ? (hist[hist.length-1] < hist[hist.length-5] ? '▼ DEGRADING' : '▲ STABLE')
+    : '— ACQUIRING';
+  const trendColor = hist.length > 5 && hist[hist.length-1] < hist[hist.length-5]
+    ? (rulHours < 200 ? '#FF3B3B' : '#FFB800')
+    : '#00FFA3';
 
   return (
     <div className="gcs-card p-3 flex flex-col gap-3">
@@ -80,6 +189,21 @@ export default function RULDegradationGauge({ telemetry }) {
         </div>
       </div>
 
+      {/* ── RUL Trend Sparkline ────────────────────────────────────────────── */}
+      <div className="rounded-lg overflow-hidden"
+        style={{ background: 'var(--bg-card-inner)', border: '1px solid rgba(0,212,255,0.12)' }}>
+        <div className="flex items-center justify-between px-2 pt-1.5 pb-0.5">
+          <span className="flex items-center gap-1 text-[10px] font-mono" style={{ color: 'var(--text-secondary)' }}>
+            <TrendingDown size={11} style={{ color: '#00D4FF' }} />
+            RUL DEGRADATION TREND (last {RUL_HISTORY} ticks)
+          </span>
+          <span className="text-[10px] font-bold font-mono" style={{ color: trendColor }}>
+            {trendSymbol}
+          </span>
+        </div>
+        <canvas ref={canvasRef} className="w-full block" style={{ height: '48px' }} />
+      </div>
+
       {/* Sub-system Health Bars */}
       <div className="pt-2 space-y-2 text-xs font-mono" style={{ borderTop: '1px solid var(--border-divider)' }}>
         <div className="text-[11px] font-semibold mb-1" style={{ color: 'var(--text-secondary)' }}>
@@ -88,9 +212,9 @@ export default function RULDegradationGauge({ telemetry }) {
 
         {[
           { label: 'Combustion & Pistons', val: subs.pistons },
-          { label: 'Turbocharger & Boost',   val: subs.turbo },
-          { label: 'Lubrication Circuit',     val: subs.lube },
-          { label: 'Cooling System',          val: subs.cooling },
+          { label: 'Turbocharger & Boost',  val: subs.turbo   },
+          { label: 'Lubrication Circuit',   val: subs.lube    },
+          { label: 'Cooling System',        val: subs.cooling },
         ].map(({ label, val }) => (
           <div key={label} className="flex items-center justify-between gap-3">
             <span className="text-[11px] w-44 shrink-0" style={{ color: '#A8BDD0' }}>{label}</span>

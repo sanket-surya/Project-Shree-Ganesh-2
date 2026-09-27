@@ -32,8 +32,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_credentials=True,
+    allow_origins=["*"],   # SIH demo: allow all origins (LAN, projector, any IP)
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -45,9 +45,13 @@ ai_engine = AeroEngineInferenceEngine()
 # Active WebSocket connections
 active_connections: List[WebSocket] = []
 
-# Black-Box Historical Mission Buffer (keeps last 500 telemetry records)
+# Server start time for uptime tracking
+import datetime
+_server_start_time = datetime.datetime.utcnow()
+
+# Black-Box Historical Mission Buffer (keeps last 24,000 records = 20 min at 20Hz)
 flight_black_box = []
-max_history_len = 1000
+max_history_len = 24000
 
 # Cascade Failure Demo State (Mission Mangal Mode)
 cascade_state = {
@@ -192,13 +196,29 @@ async def ingest_hardware_telemetry(payload: HardwarePayload):
 
 @app.get("/api/status")
 async def get_status():
+    import datetime
+    uptime_s = (datetime.datetime.utcnow() - _server_start_time).total_seconds()
     return {
         "status": "ONLINE",
         "engine_model": "Rotax 914F Turbocharged 4-Cylinder Boxer",
         "ai_models_loaded": ai_engine.is_loaded,
         "active_fault": physics_engine.active_fault,
         "mission_name": physics_engine.mission_name,
-        "uptime_sec": round(physics_engine.accumulated_hours * 3600, 1)
+        "uptime_sec": round(uptime_s, 1)
+    }
+
+@app.get("/api/health")
+async def health_check():
+    """Simple health ping for judges/testers to verify backend is live."""
+    import datetime
+    uptime_s = (datetime.datetime.utcnow() - _server_start_time).total_seconds()
+    return {
+        "status": "ok",
+        "version": "1.0.0",
+        "ai_loaded": ai_engine.is_loaded,
+        "active_connections": len(active_connections),
+        "uptime_sec": round(uptime_s, 1),
+        "black_box_records": len(flight_black_box)
     }
 
 class EngineProfileRequest(BaseModel):

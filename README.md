@@ -54,7 +54,7 @@ By fusing **first-principles thermodynamics, high-frequency SocketCAN / FADEC te
 
 ### 2. Domain-Specific AI/ML Intelligence
 - **Physics-Informed Anomaly Detection**: Evaluates deviations between observed sensor values and first-principles thermodynamic models using an Isolation Forest baseline.
-- **Multi-Class Fault Diagnostic Classifier**: 99.93% test accuracy across 8+ failure modes:
+- **Multi-Class Fault Diagnostic Classifier**: Trained on physics-informed telemetry across 8+ distinct failure modes (real bearing/sensor datasets + physics simulation). Validated accuracy on held-out test set:
   1. `Cylinder_Misfire` (Coil / Spark loss on Cyl 3)
   2. `Turbo_Degradation` (Wastegate jam & boost pressure loss)
   3. `Injector_Clogging` (Lean combustion & critical EGT spike)
