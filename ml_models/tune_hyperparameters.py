@@ -91,8 +91,12 @@ def tune_engine(engine_id: str, sample_size: int = 200_000, cv_folds: int = 3):
     print("="*75 + "\n", flush=True)
 
     if not os.path.exists(data_path):
-        print(f"[ERROR] Data not found at {data_path}", flush=True)
-        return
+        fallback = "ml_models/data/aero_engine_telemetry.csv"
+        if os.path.exists(fallback):
+            data_path = fallback
+        else:
+            print(f"[ERROR] Data not found at {data_path}", flush=True)
+            return
 
     t0 = time.time()
     file_size_mb = os.path.getsize(data_path) / (1024 * 1024)

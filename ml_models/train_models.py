@@ -9,6 +9,14 @@ Trained on 1,000,008 Rotax 914F Physics-Informed Aero Propulsion Telemetry Recor
 
 import os
 import sys
+
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 import json
 import joblib
 import numpy as np

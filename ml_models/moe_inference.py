@@ -10,6 +10,7 @@ import os
 import json
 import joblib
 import numpy as np
+import pandas as pd
 from typing import Dict, Any, List, Optional
 
 from ml_models.moe_architecture import (
@@ -64,6 +65,7 @@ class AeroTwinMoEInference:
         x_vec = np.zeros((1, len(AEROTWIN_27_PARAMS)), dtype=np.float32)
         for i, param in enumerate(AEROTWIN_27_PARAMS):
             x_vec[0, i] = float(telemetry.get(param, 0.0))
+        df_vec = pd.DataFrame(x_vec, columns=AEROTWIN_27_PARAMS)
 
         # 1. Gating Router: Compute weights
         gating_weights = self.arch.router.predict_gating_weights(x_vec)[0]
@@ -75,37 +77,54 @@ class AeroTwinMoEInference:
             for idx in top_indices if gating_weights[idx] > 0.05
         ]
 
-        # 2. Expert 2: Fault Classification
+        # 2. Expert 1: Performance Regressor
+        e1_model = self.arch.experts.get("E1_performance")
+        e1_power_pred = float(e1_model.predict(df_vec)[0]) if e1_model is not None else float(telemetry.get("power_output_kw", 65.0))
+
+        # 3. Expert 2: Fault Classification
         e2_model = self.arch.experts.get("E2_fault")
         if e2_model is not None:
-            probs = e2_model.predict_proba(x_vec)[0]
+            probs = e2_model.predict_proba(df_vec)[0]
             top_class_idx = int(np.argmax(probs))
             top_class_name = self.fault_classes[top_class_idx] if top_class_idx < len(self.fault_classes) else "Nominal"
             fault_prob = float(probs[top_class_idx])
+            fault_probs_dict = {
+                self.fault_classes[i]: float(probs[i])
+                for i in range(min(len(self.fault_classes), len(probs)))
+            }
         else:
             top_class_name = "Nominal"
             fault_prob = 0.98
-
-        # 3. Expert 4: RUL Prognostics
-        e4_model = self.arch.experts.get("E4_rul")
-        if e4_model is not None:
-            rul_val = float(e4_model.predict(x_vec)[0])
-            rul_hours = max(5.0, round(rul_val, 1))
-        else:
-            rul_hours = 850.0
+            fault_probs_dict = {"Nominal": 0.98}
 
         # 4. Expert 3: Health Index
         e3_model = self.arch.experts.get("E3_health")
         if e3_model is not None:
-            health_raw = float(e3_model.predict(x_vec)[0])
+            health_raw = float(e3_model.predict(df_vec)[0])
             health_idx = max(0.0, min(100.0, round(health_raw, 1)))
         else:
             health_idx = 98.0
 
-        # 5. Expert 7: Physics Residual Check & Anomaly Score
+        # 5. Expert 4: RUL Prognostics
+        e4_model = self.arch.experts.get("E4_rul")
+        if e4_model is not None:
+            rul_val = float(e4_model.predict(df_vec)[0])
+            rul_hours = max(5.0, round(rul_val, 1))
+        else:
+            rul_hours = 850.0
+
+        # 6. Expert 5: Operating Regime / Density Altitude Strain
+        e5_model = self.arch.experts.get("E5_operating")
+        envelope_strain = float(e5_model.predict(df_vec)[0]) if e5_model is not None else 0.5
+
+        # 7. Expert 6: Cross-Engine Transfer Anomaly Check
+        e6_model = self.arch.experts.get("E6_cross_engine")
+        cross_engine_score = float(-e6_model.score_samples(df_vec)[0]) if e6_model is not None else 0.1
+
+        # 8. Expert 7: Physics Residual Check & Anomaly Score
         e7_model = self.arch.experts.get("E7_physics")
         if e7_model is not None:
-            score = float(-e7_model.score_samples(x_vec)[0])
+            score = float(-e7_model.score_samples(df_vec)[0])
             anomaly_score = max(0.0, min(1.0, (score - 0.4) / 0.4))
         else:
             anomaly_score = 0.08 if top_class_name == "Nominal" else 0.85
@@ -132,11 +151,22 @@ class AeroTwinMoEInference:
         return {
             "fault_class": top_class_name,
             "fault_probability": round(fault_prob, 3),
+            "fault_probabilities": fault_probs_dict,
             "is_anomaly": bool(is_anomaly),
             "anomaly_score": round(anomaly_score, 3),
             "health_index": round(health_idx, 1),
             "rul_hours": round(rul_hours, 1),
             "active_experts": active_experts,
+            "expert_metrics": {
+                "e1_predicted_power_kw": round(e1_power_pred, 1),
+                "e2_top_fault": top_class_name,
+                "e2_confidence": round(fault_prob, 3),
+                "e3_health_score": round(health_idx, 1),
+                "e4_rul_hours": round(rul_hours, 1),
+                "e5_envelope_strain": round(envelope_strain, 3),
+                "e6_cross_engine_score": round(cross_engine_score, 3),
+                "e7_physics_residual_score": round(anomaly_score, 3)
+            },
             "xai_top_features": xai_features,
             "engine_status": status
         }

@@ -1,6 +1,6 @@
 {
   "model_version": "4.0.0-MoE-7Experts-GPU",
-  "timestamp": "2026-09-27T19:24:57Z",
+  "timestamp": "2026-09-29T20:32:34Z",
   "hardware": "NVIDIA GeForce RTX 5050 (CUDA Hist)",
   "feature_columns": [
     "rpm",
@@ -33,28 +33,35 @@
   ],
   "experts": {
     "E1_performance": {
-      "r2_score": 0.9999,
-      "rmse": 0.1
+      "r2_score": 1.0,
+      "rmse": 0.0,
+      "dataset": "nasa_cmapss + lycoming_real"
     },
     "E2_fault": {
-      "accuracy": 1.0,
-      "f1_score": 1.0
+      "accuracy": 0.813,
+      "f1_score": 0.8118
     },
     "E3_health": {
-      "status": "trained"
+      "status": "trained",
+      "rows": 800000
     },
     "E4_rul": {
-      "r2_score": 0.9995,
-      "rmse_hours": 7.07
+      "r2_score": 0.9762,
+      "rmse_hours": 29.48,
+      "rows": 800000,
+      "dataset": "nasa_cmapss_real + femto_real"
     },
     "E5_operating": {
-      "status": "trained"
+      "status": "trained",
+      "rows": 800000
     },
     "E6_cross_engine": {
-      "status": "trained"
+      "status": "trained",
+      "rows": 800000
     },
     "E7_physics": {
-      "status": "trained"
+      "status": "trained",
+      "rows": 265951
     }
   },
   "fault_classes": [

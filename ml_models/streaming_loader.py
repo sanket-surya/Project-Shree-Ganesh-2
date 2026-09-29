@@ -92,22 +92,28 @@ DATASET_REGISTRY = {
         "expert_tags": ["E3_health", "E4_rul"],
         "col_map": {"__rms_col__": "vibration_g"},
         "fault_col": None, "rul_col": "__rul_from_end__", "chunk_size": 20000,
+        "file_limit": 400,  # Increased: 150 → 400 (balanced run-to-failure sequences)
     },
     "paderborn_bearing": {
-        "path": r"C:\AeroTwin_Paderborn",
+        "path": r"D:\AeroTwin_Datasets\unpacked\Paderborn",
         "expert_tags": ["E2_fault", "E3_health"],
         "col_map": {"__rms_col__": "vibration_g", "__mat_fault_from_filename__": "fault_label"},
         "fault_col": "__label_col__", "rul_col": None, "chunk_size": 30000,
+        "file_limit": 200,  # OOM fix: laptop 16GB RAM — limit from 2560 to 200 files
     },
     "xjtu_bearing": {
+        # XJTU-SY: 17 run-to-failure bearing sequences under 3 speed conditions
+        # Real accelerated life test data — excellent for E2 fault + E4 RUL
         "path": r"D:\AeroTwin_Datasets\unpacked\XJTU-SY_Bearing_Datasets",
         "expert_tags": ["E2_fault", "E3_health", "E4_rul"],
         "col_map": {"__rms_col__": "vibration_g", "__mat_fault_from_filename__": "fault_label"},
         "fault_col": "__label_col__", "rul_col": "__rul_from_end__", "chunk_size": 20000,
+        "file_limit": 17,   # All 17 sequences — each is a full run-to-failure test
     },
     "nasa_cmapss_txt": {
         "path": r"D:\AeroTwin_Datasets\unpacked\CMAPSSData",
-        "expert_tags": ["E1_performance", "E4_rul"],
+        # E7_physics: NASA CMAPSS has real thermodynamic sensor residuals (MAP, oil, CHT proxies)
+        "expert_tags": ["E1_performance", "E4_rul", "E7_physics"],
         "col_map": {
             "s2":  "manifold_pressure_hpa", "s3": "oil_temperature_c",
             "s4":  "oil_pressure_bar",       "s7": "fuel_flow_lph",
@@ -128,12 +134,14 @@ DATASET_REGISTRY = {
         "expert_tags": ["E2_fault", "E3_health"],
         "col_map": {"__rms_col__": "vibration_g"},
         "fault_col": "__label_col__", "rul_col": None, "chunk_size": 30000,
+        "skip": True,  # OOM: 12960 files — not aerospace-specific, skip on laptop
     },
     "subf_v2_bearing": {
         "path": r"D:\AeroTwin_Datasets\unpacked\subf-v2-0-dataset-bearing-faults-sound-data",
         "expert_tags": ["E2_fault"],
         "col_map": {"__rms_col__": "vibration_g"},
         "fault_col": "__label_col__", "rul_col": None, "chunk_size": 20000,
+        "skip": True,  # OOM: 6480 files — sound data, not relevant for engine twin, skip
     },
     "bispectrum_signal": {
         "path": r"D:\AeroTwin_Datasets\unpacked\bispectrum-signal",
@@ -149,6 +157,7 @@ DATASET_REGISTRY = {
             "rpm": "rpm", "voltage": "bus_voltage_v",
         },
         "fault_col": "label", "rul_col": None, "chunk_size": 30000,
+        "file_limit": 250,  # Increased: 100 → 250 files (3.8 GB dataset, spread across classes)
     },
     "snu_gearbox": {
         "path": r"D:\AeroTwin_Datasets\unpacked\SNU_Gearbox_code",
@@ -184,9 +193,56 @@ DATASET_REGISTRY = {
         "col_map": {"__rms_col__": "vibration_g"},
         "fault_col": "__label_col__", "rul_col": None, "chunk_size": 20000,
     },
+    "lycoming_flight_telemetry": {
+        "path": r"D:\AeroTwin_Datasets\unpacked\c172x_lycoming_telemetry",
+        "expert_tags": ["E1_performance", "E6_cross_engine"],
+        "col_map": {
+            "Fixed-Pitch 75-inch Two-Blade Propeller RPM (engine 0)": "rpm",
+            "IO320 HP (engine 0)": "power_output_kw",
+            "IO320 MAP (engine 0 in inHg)": "manifold_pressure_hpa",
+            "Fixed-Pitch 75-inch Two-Blade Propeller Torque (engine 0)": "torque_nm",
+            "Altitude ASL (ft)": "altitude_m",
+        },
+        "fault_col": None, "rul_col": None, "chunk_size": 40000,
+    },
+    "rflymad_hil_uav": {
+        "path": r"D:\AeroTwin_Datasets\unpacked\rflymad_hil",
+        "expert_tags": ["E5_operating", "E6_cross_engine"],
+        "col_map": {
+            "escStatus.rpm1": "rpm",
+            "throttlePct": "throttle_pct",
+            "altitudeAMSL": "altitude_m",
+            "vibration.zAxis": "vibration_g",
+            "battery255.voltage": "bus_voltage_v",
+            "temperature.temperature1": "ambient_temp_c",
+        },
+        "fault_col": None, "rul_col": None, "chunk_size": 40000,
+        "file_limit": 100,  # OOM fix: was 235 files → limit to 100
+    },
+    "nasa_ims_bearing": {
+        "path": r"D:\AeroTwin_Datasets\unpacked\nasa_ims_bearing",
+        "expert_tags": ["E3_health", "E4_rul"],
+        "col_map": {
+            "B1__rms": "vibration_g",
+            "B1__mean": "res_cht_spread",
+        },
+        "fault_col": None, "rul_col": None, "chunk_size": 30000,
+    },
+    "rotating_shaft_vibration": {
+        "path": r"D:\AeroTwin_Datasets\unpacked\rotating_shaft_vibration",
+        "expert_tags": ["E2_fault", "E3_health"],
+        "col_map": {
+            "Measured_RPM": "rpm",
+            "Vibration_1": "vibration_g",
+        },
+        "fault_col": "__label_col__", "rul_col": None, "chunk_size": 30000,
+    },
     "aero_engine_synth": {
-        "path": r"ml_models/data/aero_engine_telemetry.csv",  # Our physics-generated data
-        "expert_tags": ["E1_performance", "E2_fault", "E3_health", "E4_rul", "E5_operating", "E6_cross_engine", "E7_physics"],
+        # Physics-informed synthetic augmentation (206 MB, Rotax 914F Otto-Turbo model)
+        # NOTE: Used ONLY for E2_fault label augmentation (missing fault classes from real data)
+        # E1_performance and E7_physics now use ONLY real datasets (NASA CMAPSS + Lycoming)
+        "path": r"ml_models/data/aero_engine_telemetry.csv",
+        "expert_tags": ["E2_fault"],   # Removed from E1, E7 — real data only for those
         "col_map": {
             "rpm": "rpm", "power_output_kw": "power_output_kw",
             "torque_nm": "torque_nm", "manifold_pressure_hpa": "manifold_pressure_hpa",
@@ -235,25 +291,37 @@ class AeroTwinStreamingLoader:
         self.defaults    = NOMINAL_DEFAULTS
         self.load_these  = datasets_to_load or list(self.registry.keys())
 
-    def _find_data_files(self, folder: str, limit: int = 35) -> List[str]:
-        """Recursively find all supported data files in a folder, balanced across classes."""
+    def _find_data_files(self, folder: str, limit: int = 0) -> List[str]:
+        """
+        Recursively find ALL supported data files in a folder.
+        limit=0 means NO CAP — use every single file available.
+        If limit > 0, balance across fault classes for diversity.
+        """
         import collections
         files = []
         if not os.path.exists(folder):
             return files
         for root, _, fnames in os.walk(folder):
             for f in fnames:
-                if f.endswith(('.csv', '.parquet', '.txt', '.dat', '.mat', '.h5', '.hdf5')):
+                ext = os.path.splitext(f)[1].lower()
+                # Skip non-data text files (readme, license, notes, etc.)
+                if ext == '.txt':
+                    base = f.lower()
+                    if any(x in base for x in ['readme', 'license', 'note', 'about', 'info', 'desc', 'read_me']):
+                        continue
+                if ext in ('.csv', '.parquet', '.txt', '.dat', '.mat', '.h5', '.hdf5'):
                     files.append(os.path.join(root, f))
-        if len(files) <= limit:
+
+        # No cap — return everything sorted
+        if limit == 0 or len(files) <= limit:
             return sorted(files)
-        
-        # Balance files across inferred fault classes if .mat or multiple classes exist
+
+        # Balance files across inferred fault classes if limit is explicitly set
         by_class = collections.defaultdict(list)
         for f in files:
             lbl = self._fault_label_from_filename(f)
             by_class[lbl].append(f)
-        
+
         if len(by_class) > 1:
             balanced = []
             per_class = max(1, limit // len(by_class))
@@ -268,10 +336,13 @@ class AeroTwinStreamingLoader:
 
     # Keep old name for backward compatibility
     def _find_csv_files(self, folder: str) -> List[str]:
-        return self._find_data_files(folder)
+        return self._find_data_files(folder, limit=0)
 
-    def _read_mat_file(self, fpath: str, chunk_size: int = 15000, max_rows_per_file: int = 15000) -> List[pd.DataFrame]:
-        """Read a .mat file and return list of DataFrames (chunked and capped for diversity)."""
+    def _read_mat_file(self, fpath: str, chunk_size: int = 5000, max_rows_per_file: int = 0) -> List[pd.DataFrame]:
+        """
+        Read a .mat file and return list of DataFrames.
+        max_rows_per_file=0 means NO CAP — read entire file.
+        """
         try:
             import scipy.io as sio
         except ImportError:
@@ -294,8 +365,8 @@ class AeroTwinStreamingLoader:
                 data = data.reshape(data.shape[0], -1)
             df = pd.DataFrame(data.astype(np.float32))
             df.columns = [f"ch{i}" for i in range(df.shape[1])]
-            # Cap rows per file for diversity across files
-            if len(df) > max_rows_per_file:
+            # No cap if max_rows_per_file == 0
+            if max_rows_per_file > 0 and len(df) > max_rows_per_file:
                 df = df.iloc[:max_rows_per_file]
             # Chunk it
             for start in range(0, len(df), chunk_size):
@@ -305,8 +376,19 @@ class AeroTwinStreamingLoader:
         return chunks
 
     def _read_h5_file(self, fpath: str, chunk_size: int = 50000) -> List[pd.DataFrame]:
-        """Read a .h5/.hdf5 file and return list of DataFrames."""
+        """Read a .h5/.hdf5 file and return list of DataFrames.
+        Skips truncated/corrupt files by checking file size before opening.
+        """
         chunks = []
+
+        # ── Truncation guard: check actual file size vs minimum threshold ──────
+        # A valid H5 dataset file should be at least 1 MB.
+        # Truncated downloads (e.g. 223 MB of a 2.8 GB file) will still open
+        # but throw HDF5 internal errors. We catch those gracefully below.
+        actual_size = os.path.getsize(fpath)
+        if actual_size < 1024 * 1024:  # < 1 MB → almost certainly empty/corrupt
+            print(f"  [LOADER WARN] Skipping tiny H5 file ({actual_size/1024:.1f} KB): {os.path.basename(fpath)}")
+            return chunks
         try:
             import h5py
             with h5py.File(fpath, 'r') as f:
@@ -489,7 +571,9 @@ class AeroTwinStreamingLoader:
         if path.endswith('.csv') and os.path.isfile(path):
             data_files = [path]
         else:
-            data_files = self._find_data_files(path, limit=30)
+            # Use per-dataset file_limit if set (e.g. Paderborn — RAM safety)
+            file_limit = config.get("file_limit", 0)
+            data_files = self._find_data_files(path, limit=file_limit)  # 0 = NO CAP
 
         if not data_files:
             print(f"  [LOADER] No data files found for {dataset_id} at {path}")
@@ -502,7 +586,7 @@ class AeroTwinStreamingLoader:
                 if ext == '.mat':
                     # Infer fault from filename if needed
                     inferred_label = self._fault_label_from_filename(fpath)
-                    for mat_chunk in self._read_mat_file(fpath, chunk_size):
+                    for mat_chunk in self._read_mat_file(fpath, chunk_size=chunk_size, max_rows_per_file=0):  # NO CAP
                         processed = self._process_chunk(mat_chunk, col_map, fault_col, rul_col, dataset_id)
                         # Override label with filename-inferred label
                         if '__mat_fault_from_filename__' in col_map:
@@ -514,7 +598,10 @@ class AeroTwinStreamingLoader:
                         yield self._process_chunk(h5_chunk, col_map, fault_col, rul_col, dataset_id)
 
                 elif ext == '.parquet':
-                    df_full = pd.read_parquet(fpath, engine='pyarrow')
+                    try:
+                        df_full = pd.read_parquet(fpath, engine='fastparquet')
+                    except Exception:
+                        df_full = pd.read_parquet(fpath)  # fallback
                     for start in range(0, len(df_full), chunk_size):
                         chunk = df_full.iloc[start:start+chunk_size]
                         yield self._process_chunk(chunk, col_map, fault_col, rul_col, dataset_id)
@@ -564,30 +651,58 @@ class AeroTwinStreamingLoader:
         for ds_id, config in self.registry.items():
             if ds_id not in self.load_these:
                 continue
+            if config.get("skip", False):
+                print(f"  [LOADER] SKIP {ds_id} (OOM skip flag set)")
+                continue
             if expert_tag in config.get("expert_tags", []):
                 print(f"  [LOADER] Streaming {ds_id} for {expert_tag}...")
                 yield from self.stream_dataset(ds_id)
 
-    def load_expert_dataset(self, expert_tag: str, max_rows: int = 200000) -> pd.DataFrame:
+    def load_expert_dataset(self, expert_tag: str, max_rows: int = 0) -> pd.DataFrame:
         """
-        Load all data for one expert, capped at max_rows (memory safe).
+        Load ALL available real data for one expert across ALL matching datasets.
+        max_rows=0 → NO CAP, use every record available.
+        max_rows>0 → Hard cap (use only for testing/debugging).
         Returns unified 27-param DataFrame with fault_label + rul_hours.
         """
+        matching_datasets = [
+            ds_id for ds_id, config in self.registry.items()
+            if ds_id in self.load_these and expert_tag in config.get("expert_tags", []) and os.path.exists(config.get("path", ""))
+        ]
+
+        if not matching_datasets:
+            print(f"  [LOADER] No real datasets found for {expert_tag}, generating synthetic fallback...")
+            return self._generate_synthetic_fallback(expert_tag, 50000)
+
         chunks = []
-        total = 0
-        for chunk in self.stream_all_for_expert(expert_tag):
-            chunks.append(chunk)
-            total += len(chunk)
-            if total >= max_rows:
+        total_rows = 0
+        for ds_id in matching_datasets:
+            print(f"  [LOADER] Ingesting ALL data from: {ds_id} for {expert_tag}...")
+            ds_rows = 0
+            try:
+                for chunk in self.stream_dataset(ds_id):
+                    chunks.append(chunk)
+                    ds_rows += len(chunk)
+                    total_rows += len(chunk)
+                    # Only break if max_rows is set AND exceeded
+                    if max_rows > 0 and total_rows >= max_rows:
+                        break
+                print(f"    → {ds_id}: {ds_rows:,} rows ingested")
+            except Exception as e:
+                print(f"  [LOADER WARN] Error ingesting {ds_id}: {e}")
+            if max_rows > 0 and total_rows >= max_rows:
                 break
 
         if not chunks:
-            print(f"  [LOADER] No data found for {expert_tag}, generating synthetic fallback...")
-            return self._generate_synthetic_fallback(expert_tag, max_rows // 10)
+            return self._generate_synthetic_fallback(expert_tag, 10000)
 
         df = pd.concat(chunks, ignore_index=True)
         df = df.sample(frac=1, random_state=42).reset_index(drop=True)  # Shuffle
-        return df.head(max_rows)
+        print(f"  [LOADER] ✅ {expert_tag}: {len(df):,} total real records loaded from {len(matching_datasets)} datasets")
+        # Only trim if hard cap set
+        if max_rows > 0:
+            return df.head(max_rows)
+        return df
 
     def _generate_synthetic_fallback(self, expert_tag: str, n: int = 10000) -> pd.DataFrame:
         """Generate synthetic data as fallback when real dataset unavailable."""
@@ -603,14 +718,14 @@ class AeroTwinStreamingLoader:
         return df
 
     def get_dataset_summary(self) -> Dict:
-        """Quick summary of available datasets."""
+        """Quick summary of available datasets (counts ALL files, no cap)."""
         summary = {}
         for ds_id, config in self.registry.items():
             path = config["path"]
             if path.endswith('.csv'):
                 files = [path] if os.path.exists(path) else []
             else:
-                files = self._find_data_files(path, limit=30)
+                files = self._find_data_files(path, limit=0)  # Count ALL files
             summary[ds_id] = {
                 "available": len(files) > 0,
                 "files_found": len(files),

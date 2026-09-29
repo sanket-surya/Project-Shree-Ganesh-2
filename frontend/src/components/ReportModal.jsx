@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Printer, CheckCircle, X, Download, FileText } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -99,7 +98,6 @@ export default function ReportModal({ isOpen, onClose, telemetry }) {
             const data = await res.json();
             setReportData(data);
             setLoading(false);
-            try { confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } }); } catch (e) {}
             return;
           }
         } catch (e) {
@@ -112,7 +110,6 @@ export default function ReportModal({ isOpen, onClose, telemetry }) {
         const fallback = buildFallbackReport(telemetryRef.current);
         setReportData(fallback);
         setLoading(false);
-        try { confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } }); } catch (e) {}
       }
     };
 

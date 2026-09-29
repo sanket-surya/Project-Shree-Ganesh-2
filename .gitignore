@@ -31,3 +31,10 @@ frontend/dist/
 dist/
 build/
 .vscode/
+
+# Temporary previews, archives & logs
+*_preview/
+*_assets/
+archive_dataset_pipeline/
+*.zip
+*.log

@@ -24,7 +24,7 @@ from ml_models.streaming_loader import AeroTwinStreamingLoader, AEROTWIN_27_PARA
 
 # ── Config ────────────────────────────────────────────────────────────────────
 OUT_DIR   = os.path.join(os.path.dirname(__file__), "data", "experts")
-MAX_ROWS  = 300_000   # per expert (memory safe)
+MAX_ROWS  = 800_000  # Increased — allows CWRU + XJTU + MFPT diversity (16GB RAM safe)
 os.makedirs(OUT_DIR, exist_ok=True)
 
 EXPERTS = [
@@ -80,7 +80,7 @@ def prepare_expert(loader, expert_id, expert_tag, description, max_rows):
 
     # ── Save as Parquet ──────────────────────────────────────────────────────
     out_path = os.path.join(OUT_DIR, f"{expert_id}.parquet")
-    df.to_parquet(out_path, index=False, engine="pyarrow", compression="snappy")
+    df.to_parquet(out_path, index=False, engine="fastparquet", compression="snappy")
     sz_mb = os.path.getsize(out_path) / 1024**2
 
     elapsed = time.time() - t0
@@ -126,23 +126,24 @@ def main():
     stats = []
     total_t0 = time.time()
 
-    for expert_id, expert_tag, description in EXPERTS:
+    import argparse
+    parser = argparse.ArgumentParser(description="Prepare AeroTwin Expert Datasets")
+    parser.add_argument("--expert", type=str, default="all", help="Target expert: E1, E2, E3, E4, E5, E6, E7, or all")
+    args = parser.parse_args()
+
+    target_expert = args.expert.upper().strip()
+    target_list = EXPERTS
+    if target_expert != "ALL":
+        target_list = [exp for exp in EXPERTS if exp[0].upper().startswith(target_expert)]
+        if not target_list:
+            print(f"Unknown expert '{args.expert}'. Choose from: E1, E2, E3, E4, E5, E6, E7, or all")
+            return
+        print(f"🎯 Selective Preparation: Preparing only {target_list[0][0]}")
+
+    for expert_id, expert_tag, description in target_list:
         out_path = os.path.join(OUT_DIR, f"{expert_id}.parquet")
 
-        # Skip if already exists and recent (< 1 day old)
-        if os.path.exists(out_path):
-            age_h = (time.time() - os.path.getmtime(out_path)) / 3600
-            sz_mb = os.path.getsize(out_path) / 1024**2
-            rows = pd.read_parquet(out_path).shape[0]
-            if age_h < 24 and rows > 1000:  # Cache valid for 24h (re-enabled after real data loaded)
-                print(f"\n[{expert_id}] Already prepared ({rows:,} rows, {sz_mb:.1f} MB, {age_h:.1f}h ago) — SKIP")
-                stats.append({
-                    "expert": expert_id, "description": description,
-                    "rows": rows, "size_mb": round(sz_mb, 2),
-                    "status": "cached",
-                })
-                continue
-
+        # Force fresh generation from all real datasets
         stat = prepare_expert(loader, expert_id, expert_tag, description, MAX_ROWS)
         stat["status"] = "prepared"
         stats.append(stat)
@@ -177,3 +178,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

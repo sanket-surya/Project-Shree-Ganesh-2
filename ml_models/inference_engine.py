@@ -72,14 +72,21 @@ class AeroEngineInferenceEngine:
             else:
                 print("[INFERENCE] Model weights not found, waiting for training...")
 
-            # Check for MoE weights
-            moe_router_path = os.path.join(os.path.dirname(__file__), "weights", "moe", "router.joblib")
+            # Check for MoE weights and connect ALL 7 Experts to the Main Brain
+            moe_dir = os.path.join(os.path.dirname(__file__), "weights", "moe")
+            moe_router_path = os.path.join(moe_dir, "router.joblib")
             if os.path.exists(moe_router_path):
                 try:
-                    self.moe_router = joblib.load(moe_router_path)
-                    print("[INFERENCE] MoE Gating Router loaded successfully.")
+                    from ml_models.moe_inference import AeroTwinMoEInference
+                    self.moe_engine = AeroTwinMoEInference(weights_dir=moe_dir)
+                    self.moe_router = self.moe_engine.arch.router
+                    print(f"[INFERENCE] Main Brain: Successfully connected Router + {len(self.moe_engine.arch.experts)} Domain Experts!")
                 except Exception as e:
-                    self.moe_router = None
+                    self.moe_engine = None
+                    try:
+                        self.moe_router = joblib.load(moe_router_path)
+                    except Exception:
+                        self.moe_router = None
         except Exception as e:
             print(f"[INFERENCE ERROR] Could not load models: {e}")
 
@@ -240,9 +247,18 @@ class AeroEngineInferenceEngine:
         # 5. Autonomous Contingency Advisory Recommendation
         contingency = self._generate_contingency_advisory(top_fault, top_confidence, anomaly_score, state, flight)
 
-        # 6. MoE Gating Router Active Experts (if MoE router trained)
+        # 6. MoE Gating Router & 7 Domain Experts Execution (Main Brain Integration)
         active_experts = []
-        if getattr(self, "moe_router", None) is not None:
+        expert_metrics = {}
+        if getattr(self, "moe_engine", None) is not None and self.moe_engine.is_loaded:
+            try:
+                row_dict = X.iloc[0].to_dict()
+                moe_res = self.moe_engine.predict(row_dict)
+                active_experts = moe_res.get("active_experts", [])
+                expert_metrics = moe_res.get("expert_metrics", {})
+            except Exception:
+                pass
+        elif getattr(self, "moe_router", None) is not None:
             try:
                 from ml_models.moe_architecture import AEROTWIN_27_PARAMS, EXPERT_IDS
                 x_vec = np.zeros((1, len(AEROTWIN_27_PARAMS)), dtype=np.float32)
@@ -268,7 +284,8 @@ class AeroEngineInferenceEngine:
             "health_index": round(health_index, 2),  # Uses fault-aware health_index (Bug2 fixed)
             "xai_attributions": xai_contributions,
             "contingency_advisory": contingency,
-            "active_experts": active_experts
+            "active_experts": active_experts,
+            "expert_metrics": expert_metrics
         }
 
     def _compute_xai(self, feature_row: np.ndarray, primary_fault: str) -> list:
