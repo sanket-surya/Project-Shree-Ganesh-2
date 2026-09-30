@@ -38,3 +38,19 @@ build/
 archive_dataset_pipeline/
 *.zip
 *.log
+
+# Backup weights (keep primary only)
+ml_models/weights_backup/
+
+# One-time / dev scripts (not production)
+build_*.py
+create_ppt_assets.py
+apply_aerotwin_to_official_template.py
+export_preview.ps1
+test_*.py
+status_check.py
+
+# Research PDFs & docs (not part of codebase)
+FulltextThesis.pdf
+AEROTWIN_TECHNICAL_EXPLANATION.md
+DEFENSE_DEPLOYMENT_ROADMAP.md
